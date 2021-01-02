@@ -13,7 +13,7 @@ export default class Cooldown extends Listener {
     });
   }
 
-  public exec(message: Message, command: Command, remaning) {
-    return message.reply(`Please wait \`\`${ms(remaning)}\`\` before using the \`\`${command}\`\` command, again`);
+  public exec(message: Message, command: Command, remaning: number) {
+    return message.reply(`Please wait \`\`${ms(remaning)}\`\` before using the \`\`${command}\`\` command again`);
   }
 }
