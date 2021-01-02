@@ -29,7 +29,7 @@ export default class BotClient extends AkairoClient {
       blockBots: true,
       blockClient: true,
       allowMention: true,
-      defaultCooldown: 5000,
+      defaultCooldown: 15000,
       commandUtil: true,
       argumentDefaults: {
         prompt: {
