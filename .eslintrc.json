@@ -1,0 +1,45 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {},
+  "plugins": ["@typescript-eslint", "prettier"],
+  "extends": ["eslint:recommended", "plugin:@typescript-eslint/eslint-recommended", "plugin:@typescript-eslint/recommended", "prettier"],
+  "rules": {
+    "prettier/prettier": [
+      "error",
+      {
+        "endOfLine": "auto"
+      },
+      {
+        "singleQuote": true,
+        "parser": "flow"
+      }
+    ],
+    "no-console": "warn",
+    "eol-last": "error",
+    "object-curly-spacing": "error",
+    "array-bracket-spacing": "error",
+    "block-spacing": "error"
+  },
+  "space-in-parens": [
+    "error",
+    "always",
+    {
+      "exceptions": ["{}"]
+    }
+  ],
+  "no-multiple-empty-lines": [
+    "error",
+    {
+      "max": 2,
+      "maxEOF": 1
+    }
+  ],
+  "max-len": [
+    "error",
+    {
+      "ignoreStrings": true,
+      "ignoreTemplateLiterals": true
+    }
+  ]
+}
