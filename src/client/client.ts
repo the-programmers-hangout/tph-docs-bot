@@ -11,15 +11,12 @@ export default class BotClient extends AkairoClient {
   public config: BotConfig;
 
   constructor(config: BotConfig) {
-    super(
-      { ownerID: process.env.ownerID },
-      {
-        disableMentions: "everyone",
-        messageCacheMaxSize: 2500,
-        restTimeOffset: 100,
-        restRequestTimeout: 10000,
-      }
-    );
+    super({
+      disableMentions: "everyone",
+      messageCacheMaxSize: 100,
+      restTimeOffset: 100,
+      restRequestTimeout: 10000,
+    });
 
     this.config = config;
 
@@ -33,19 +30,12 @@ export default class BotClient extends AkairoClient {
       blockClient: true,
       allowMention: true,
       defaultCooldown: 5000,
-      ignoreCooldown: [],
       commandUtil: true,
       argumentDefaults: {
         prompt: {
           modifyStart: (_, str): string => `${str}\n\nType \`cancel\` to cancel the command.`,
           modifyRetry: (_, str): string => `${str}\n\nType \`cancel\` to cancel the command.`,
-          timeout: "Guess you took too long, the command has been cancelled.",
-          ended: "More than 3 tries and you still didn't couldn't do it... The command has been cancelled.",
-          cancel: "The command has been cancelled.",
-          retries: 3,
-          time: 30000,
         },
-        otherwise: "",
       },
       aliasReplacement: /-/g,
     });
@@ -58,18 +48,14 @@ export default class BotClient extends AkairoClient {
     });
   }
 
-  /**
-   * Attach listener handler, command handler, connect to DB.
-   */
   private async initializeBot() {
+    //Attach handlers
     this.listenerHandler.setEmitters({
       commandHandler: this.commandHandler,
       listenerHandler: this.listenerHandler,
     });
 
-    /**
-     * Loading handlers
-     */
+    //Load handlers
     this.commandHandler.useListenerHandler(this.listenerHandler);
     this.listenerHandler.loadAll();
     this.commandHandler.loadAll();
