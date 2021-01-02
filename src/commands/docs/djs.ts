@@ -8,9 +8,9 @@ export default class DiscordCommand extends Command {
     super("djs-docs", {
       aliases: ["djs", "d.js", "djsdocs", "discordjs", "discord.js"],
       description: {
-        content: "Searches discord.js documentation for what it thinks you mean",
-        usage: "<query> <branch>",
-        examples: ["Guild#Members"],
+        content: "Searches discord.js documentation for what it thinks you mean. Defaults to using the master branch",
+        usage: "<query> <optional branch>",
+        examples: ["Guild#Members", "Guild#Members -branch stable"],
       },
       category: "docs",
       clientPermissions: ["EMBED_LINKS"],
@@ -37,12 +37,13 @@ export default class DiscordCommand extends Command {
   public async exec(message: Message, { query, branch }): Promise<Message | Message[]> {
     const str = query.split(" ");
 
-    const source = branch == "master" ? "master" : "stable";
+    const source = branch == "stable" ? "stable" : "master";
 
     //src and q being the params accepted by the API
     const queryString = qs.stringify({ src: source, q: str.join(" ") });
     const res = await fetch(`https://djsdocs.sorta.moe/v2/embed?${queryString}`);
     const embedObj = await res.json();
+    console.log(embedObj);
 
     if (!embedObj) return;
 
