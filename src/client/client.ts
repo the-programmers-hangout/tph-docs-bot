@@ -31,6 +31,7 @@ export default class BotClient extends AkairoClient {
       allowMention: true,
       defaultCooldown: 15000,
       commandUtil: true,
+      automateCategories: true,
       argumentDefaults: {
         prompt: {
           modifyStart: (_, str): string => `${str}\n\nType \`cancel\` to cancel the command.`,
