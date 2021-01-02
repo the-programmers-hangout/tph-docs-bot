@@ -13,7 +13,7 @@ export default class CommandError extends Listener {
     });
   }
 
-  public exec(error: Error, message: Message, command: Command) {
+  public exec(error: Error, _message: Message, command: Command) {
     return console.error(`Command/Inihibitor ${command} has errored. ${error}`);
   }
 }
