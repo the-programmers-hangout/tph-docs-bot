@@ -12,7 +12,7 @@ export default class DiscordCommand extends Command {
         usage: "<query> <optional branch>",
         examples: ["Guild#Members", "Guild#Members -branch stable"],
       },
-      category: "docs",
+      channel: "guild",
       clientPermissions: ["EMBED_LINKS"],
       ratelimit: 2,
       args: [
