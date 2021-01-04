@@ -23,8 +23,6 @@ export default class BotClient extends AkairoClient {
 
     this.config = config;
 
-    console.log(config.channels.array());
-
     /**
      * Creates command handler and assigns prefix
      */

@@ -19,9 +19,6 @@ export default class Ready extends Listener {
   }
 
   private setPresence() {
-    this.client.user
-      .setPresence({ activity: { type: "WATCHING", name: "Discord.JS channel" }, status: "online" })
-      .then(console.log)
-      .catch(console.error);
+    this.client.user.setPresence({ activity: { type: "WATCHING", name: "Discord.JS channel" }, status: "online" }).catch(console.error);
   }
 }
