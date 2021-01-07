@@ -4,6 +4,5 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 RUN npm run tsc
-COPY .env ./dist/
 WORKDIR ./dist
 CMD node bot.js
