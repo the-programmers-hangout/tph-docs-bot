@@ -14,4 +14,5 @@ $ docker run -e TOKEN=<your discord token> tphdocsbot:latest
 ### Cofiguration
 
   * `TOKEN` [required] the Discord bot token to run under
+  * `PREFIX` [required] the prefix to use for the bot
 
