@@ -1,0 +1,8 @@
+version: "3.8"
+services:
+  tphdocsbot:
+    container_name: tphdocsbot
+    image: theprogrammershangout/tphdocsbot:latest
+    restart: always
+    env_file:
+      - .env
