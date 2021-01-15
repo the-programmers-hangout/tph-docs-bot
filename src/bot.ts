@@ -1,4 +1,3 @@
-import { Collection } from "discord.js";
 import "dotenv/config";
 
 import BotClient from "./client/client";
