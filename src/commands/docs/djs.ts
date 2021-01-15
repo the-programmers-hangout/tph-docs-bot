@@ -1,7 +1,7 @@
 import { Message } from "discord.js";
 import { Command } from "discord-akairo";
 import fetch from "node-fetch";
-import * as qs from "querystring";
+import { stringify } from "querystring";
 
 export default class DiscordCommand extends Command {
   public constructor() {
@@ -10,7 +10,7 @@ export default class DiscordCommand extends Command {
       description: {
         content: "Searches discord.js documentation for what it thinks you mean. Defaults to using the master branch",
         usage: "<query> <optional branch>",
-        examples: ["Guild#Members", "Guild#Members -branch stable"],
+        examples: ["Guild#Members", "Guild#Members master"],
       },
       channel: "guild",
       clientPermissions: ["EMBED_LINKS"],
@@ -27,20 +27,21 @@ export default class DiscordCommand extends Command {
         },
         {
           id: "branch",
-          flag: ["-b ", "--b ", "-branch ", "--branch "],
-          match: "option",
+          flag: ["master", "stable"],
+          match: "flag",
+          default: "stable",
         },
       ],
     });
   }
 
-  public async exec(message: Message, { query, branch }): Promise<Message | Message[]> {
+  public async exec(message: Message, { query, branch }: { query: string; branch: string }): Promise<Message | Message[]> {
     const str = query.split(" ");
 
-    const source = branch == "stable" ? "stable" : "master";
+    const source = branch ? "stable" : "master";
 
     //src and q being the params accepted by the API
-    const queryString = qs.stringify({ src: source, q: str.join(" ") });
+    const queryString = stringify({ src: source, q: str.join(" ") });
     const res = await fetch(`https://djsdocs.sorta.moe/v2/embed?${queryString}`);
     const embedObj = await res.json();
     console.log(embedObj);
