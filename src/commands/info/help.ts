@@ -10,7 +10,8 @@ export default class HelpCommand extends Command {
     super("help", {
       aliases: ["help", "info", "about"],
       description: {
-        content: "Shows a collection of available commands, or information about a specifically provided command",
+        content:
+          "Shows a collection of available commands, or information about a specifically provided command",
         usage: "<optional command>",
       },
       channel: "guild",
@@ -25,7 +26,10 @@ export default class HelpCommand extends Command {
     });
   }
 
-  public async exec(message: Message, { cmd }: { cmd: Command }): Promise<Message | Message[]> {
+  public async exec(
+    message: Message,
+    { cmd }: { cmd: Command }
+  ): Promise<Message | Message[]> {
     const prefix = process.env.PREFIX;
 
     if (!cmd) {
@@ -33,12 +37,18 @@ export default class HelpCommand extends Command {
         .embed()
         .setAuthor(this.client.user.tag, this.client.user.displayAvatarURL())
         .setColor(this.DJS_BLUE_COLOR)
-        .setDescription(`For additional info on a command, type \`${prefix}help <command>\``);
+        .setDescription(
+          `For additional info on a command, type \`${prefix}help <command>\``
+        );
 
       for (const category of this.handler.categories.values()) {
         embed.addField(
-          `${category.id.replace(/(\b\w)/gi, (lc): string => lc.toUpperCase())}`,
-          `${category.filter((cmd): boolean => cmd.aliases.length > 0).map((cmd): string => ` ${cmd.aliases[0]}`)}`
+          `${category.id.replace(/(\b\w)/gi, (lc): string =>
+            lc.toUpperCase()
+          )}`,
+          `${category
+            .filter((cmd): boolean => cmd.aliases.length > 0)
+            .map((cmd): string => ` ${cmd.aliases[0]}`)}`
         );
       }
 
@@ -52,9 +62,16 @@ export default class HelpCommand extends Command {
       .setTitle(`${cmd.aliases[0]} ${cmd.description.usage ?? ""}`)
       .addField("Description", cmd.description.content ?? "\u200b");
 
-    if (cmd.aliases.length > 1) embed.addField("Aliases", `${cmd.aliases.join(" ")}`, true);
+    if (cmd.aliases.length > 1)
+      embed.addField("Aliases", `${cmd.aliases.join(" ")}`, true);
     if (cmd.description.examples && cmd.description.examples.length)
-      embed.addField("Examples", `${cmd.aliases[0]} ${cmd.description.examples.join(`\n${cmd.aliases[0]} `)}`, true);
+      embed.addField(
+        "Examples",
+        `${cmd.aliases[0]} ${cmd.description.examples.join(
+          `\n${cmd.aliases[0]} `
+        )}`,
+        true
+      );
 
     return message.util.send(embed);
   }
