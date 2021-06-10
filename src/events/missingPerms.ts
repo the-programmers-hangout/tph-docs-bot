@@ -13,14 +13,25 @@ export default class MissingPermissions extends Listener {
     });
   }
 
-  public async exec(message: Message, command: Command, type: String, missing) {
+  public async exec(
+    message: Message,
+    command: Command,
+    type: string,
+    missing: never
+  ): Promise<void> {
     switch (type) {
       case "client":
-        console.info(`Missing the permission: ${missing}, in guild "${message.guild.name}" (${message.guild.id})`);
-        message.util!.send(`It seems like I'm missing the permission \`\`${missing}\`\` to execute the \`\`${command}\`\` command.`);
+        console.info(
+          `Missing the permission: ${missing}, in guild "${message.guild.name}" (${message.guild.id})`
+        );
+        await message.util?.send(
+          `It seems like I'm missing the permission \`\`${missing}\`\` to execute the \`\`${command}\`\` command.`
+        );
         break;
       case "user":
-        message.reply(`You're missing the permission \`\`${missing}\`\` in order to execute the \`\`${command}\`\` command.`);
+        await message.reply(
+          `You're missing the permission \`\`${missing}\`\` in order to execute the \`\`${command}\`\` command.`
+        );
         break;
     }
   }

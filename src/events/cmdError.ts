@@ -14,6 +14,6 @@ export default class CommandError extends Listener {
   }
 
   public exec(error: Error, _message: Message, command: Command) {
-    return console.error(`Command/Inihibitor ${command} has errored. ${error}`);
+    return console.error(`Command/Inhibitor ${command} has errored. ${error}`);
   }
 }
