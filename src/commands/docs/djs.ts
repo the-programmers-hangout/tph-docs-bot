@@ -6,9 +6,9 @@ export default class DiscordCommand extends Command {
     super("djs-docs", {
       aliases: ["djs", "d.js", "djsdocs", "discordjs", "discord.js"],
       description: {
-        content: "Searches discord.js documentation for what it thinks you mean. Defaults to using the master branch",
+        content: "Searches discord.js documentation for what it thinks you mean. Defaults to using the main branch",
         usage: "<query> <optional branch>",
-        examples: ["Guild#Members", "Guild#Members master"],
+        examples: ["Guild#Members", "Guild#Members main"],
       },
       channel: "guild",
       clientPermissions: ["EMBED_LINKS"],
