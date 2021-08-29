@@ -1,8 +1,6 @@
-import { Message } from "discord.js";
+import type { Message } from "discord.js";
 import { Command } from "discord-akairo";
-import fetch from "node-fetch";
-import { stringify } from "querystring";
-
+import Doc from "discord.js-docs";
 export default class DiscordCommand extends Command {
   public constructor() {
     super("djs-docs", {
@@ -27,7 +25,7 @@ export default class DiscordCommand extends Command {
         },
         {
           id: "branch",
-          flag: ["master", "stable"],
+          flag: ["main", "stable"],
           match: "flag",
           default: "stable",
         },
@@ -38,12 +36,13 @@ export default class DiscordCommand extends Command {
   public async exec(message: Message, { query, branch }: { query: string; branch: string }): Promise<Message | Message[]> {
     const str = query.split(" ");
 
-    const source = branch ? "stable" : "master";
-
-    //src and q being the params accepted by the API
-    const queryString = stringify({ src: source, q: str.join(" ") });
-    const res = await fetch(`https://djsdocs.sorta.moe/v2/embed?${queryString}`);
-    const embedObj = await res.json();
+    const source = branch ? "stable" : "main";
+    const doc = await Doc.fetch(source, {force: true});
+    const resultEmbed = doc.resolveEmbed(str.join("#"));
+    if (!resultEmbed) return;
+    // For typings of djs' embeds
+    const timeStampDate = new Date(resultEmbed.timestamp);
+    const embedObj = {...resultEmbed, timestamp: timeStampDate} ;
 
     if (!embedObj) return;
 
