@@ -1,6 +1,7 @@
 import type { Message } from "discord.js";
 import { Command } from "discord-akairo";
 import Doc from "discord.js-docs";
+
 export default class DiscordCommand extends Command {
   public constructor() {
     super("djs-docs", {

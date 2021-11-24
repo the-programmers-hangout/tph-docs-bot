@@ -1,7 +1,7 @@
 import { Listener, Command } from "discord-akairo";
 import { Message } from "discord.js";
 import BotClient from "../client/client";
-import ms = require("ms");
+import ms from "ms";
 
 export default class Cooldown extends Listener {
   public client: BotClient;
