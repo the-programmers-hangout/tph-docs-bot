@@ -1,9 +1,9 @@
 import { Command } from "discord-akairo";
 import { Message } from "discord.js";
-import Botclient from "./../../client/client";
+import BotClient from "./../../client/client";
 
 export default class HelpCommand extends Command {
-  public client: Botclient;
+  public client: BotClient;
   private DJS_BLUE_COLOR = 2266867;
 
   public constructor() {
