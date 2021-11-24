@@ -5,6 +5,7 @@
   "main": "dist/bot.js",
   "scripts": {
     "tsc": "tsc",
+    "start": "node dist/bot.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
