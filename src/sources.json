@@ -1,0 +1,13 @@
+{
+    "stable": "https://raw.githubusercontent.com/discordjs/discord.js/docs/stable.json",
+    "main": "https://raw.githubusercontent.com/discordjs/discord.js/docs/main.json",
+    "commando": "https://raw.githubusercontent.com/discordjs/commando/docs/master.json",
+    "rpc": "https://raw.githubusercontent.com/discordjs/rpc/docs/master.json",
+    "akairo": "https://raw.githubusercontent.com/discord-akairo/discord-akairo/docs/8.1.0.json",
+    "collection": "https://raw.githubusercontent.com/discordjs/collection/docs/stable.json",
+    "collection-main": "https://raw.githubusercontent.com/discordjs/collection/docs/main.json",
+    "builders":"https://raw.githubusercontent.com/discordjs/builders/docs/stable.json",
+    "builders-main":"https://raw.githubusercontent.com/discordjs/builders/docs/main.json",
+    "voice":"https://raw.githubusercontent.com/discordjs/voice/docs/stable.json",
+    "voice-main":"https://raw.githubusercontent.com/discordjs/voice/docs/main.json"
+}

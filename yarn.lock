@@ -742,12 +742,13 @@ discord-akairo@^8.1.0:
   resolved "https://registry.yarnpkg.com/discord-akairo/-/discord-akairo-8.1.0.tgz#9f3d910e12c197d40d3522a3a93679e2a746a6ca"
   integrity sha512-INWYmHo6NgyYx1ZKGSCmgznVfvkXpWGj4fGCGjO8IPkZ06Bidb9YKr4rXy2lwG0kprCjvqY0qbbhcw6N050abQ==
 
-discord.js-docs@BenjammingKirby/discord.js-docs#types:
+discord.js-docs@^0.1.2:
   version "0.1.2"
-  resolved "https://codeload.github.com/BenjammingKirby/discord.js-docs/tar.gz/f8a89e4f2ae9adff2104a79e501e59aadc8e9dbe"
+  resolved "https://registry.yarnpkg.com/discord.js-docs/-/discord.js-docs-0.1.2.tgz#65941b3d037346cec220d1b5e0ec8e46aa62697e"
+  integrity sha512-DrDOJD3odnmGJE8HyVaspAYiUN51LotzqIH/tNq9PydZva+wceVM5dijEBI+g/0hSl1/CQKTIgN3z0dIcMv0CQ==
   dependencies:
     common-tags "^1.8.0"
-    fuse.js "^3.4.6"
+    fuse.js "^3.2.1"
     node-fetch "^2.6.0"
 
 discord.js@^12.5.1:
@@ -1110,7 +1111,7 @@ functional-red-black-tree@^1.0.1:
   resolved "https://registry.yarnpkg.com/functional-red-black-tree/-/functional-red-black-tree-1.0.1.tgz#1b0ab3bd553b2a0d6399d29c0e3ea0b252078327"
   integrity sha1-GwqzvVU7Kg1jmdKcDj6gslIHgyc=
 
-fuse.js@^3.4.6:
+fuse.js@^3.2.1:
   version "3.6.1"
   resolved "https://registry.yarnpkg.com/fuse.js/-/fuse.js-3.6.1.tgz#7de85fdd6e1b3377c23ce010892656385fd9b10c"
   integrity sha512-hT9yh/tiinkmirKrlv4KWOjztdoZo1mx9Qh4KvWqC7isoXwdUY3PNWUxceF4/qO9R6riA2C29jdTOeQOIROjgw==
