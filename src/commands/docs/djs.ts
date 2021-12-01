@@ -1,7 +1,6 @@
 import type { Message } from "discord.js";
 import { Command } from "discord-akairo";
 import Doc from "discord.js-docs";
-import sources = require("../../sources.json");
 export default class DiscordCommand extends Command {
   public constructor() {
     super("djs-docs", {
@@ -26,8 +25,7 @@ export default class DiscordCommand extends Command {
         },
         {
           id: "branch",
-          flag: ["main", "stable"],
-          match: "flag",
+          "type": "string",
           default: "stable",
         },
       ],
@@ -36,8 +34,7 @@ export default class DiscordCommand extends Command {
 
   public async exec(message: Message, { query, branch }: { query: string; branch: string }): Promise<Message | Message[]> {
     const str = query.split(" ");
-
-    const source = branch ? "stable" : sources["main"];
+    const source = branch;
     const doc = await Doc.fetch(source, {force: true});
     const resultEmbed = doc.resolveEmbed(str.join("#"));
     if (!resultEmbed) return;
