@@ -1,12 +1,27 @@
 import "dotenv/config";
+import { Client, Collection } from "discord.js";
+import { MyContext } from "./interfaces";
+import { loadCommands, commandHandler } from "./handlers/CommandHandler";
 
-import BotClient from "./client/client";
+(async function () {
+  const context: MyContext = {
+    client: new Client({
+      intents: ["GUILDS"],
+      presence: {
+        activities: [{ type: "WATCHING", name: "Discord.JS channel" }],
+        status: "online",
+      },
+      // For DMs, now on dms a partial channel is received
+      partials: ["CHANNEL"],
+    }),
+    commands: new Collection(),
+    cooldownCounter: new Collection(),
+  };
+  const docsBot = context.client;
+  await loadCommands(context);
+  docsBot.on("error", console.error);
+  docsBot.on("warn", console.warn);
+  docsBot.on("interactionCreate", commandHandler.bind(null, context));
 
-const client: BotClient = new BotClient({
-  token: process.env.TOKEN
-});
-
-client.on("error", (error) => console.error(error));
-client.on("warn", (warn) => console.warn(warn));
-
-client.start();
+  docsBot.login(process.env.TOKEN);
+})();

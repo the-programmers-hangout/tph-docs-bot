@@ -7,5 +7,5 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 RUN npm run tsc
-WORKDIR ./dist
+WORKDIR /usr/app/dist
 CMD node bot.js

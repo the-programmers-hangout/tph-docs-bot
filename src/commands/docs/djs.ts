@@ -1,49 +1,56 @@
-import type { Message } from "discord.js";
-import { Command } from "discord-akairo";
-import Doc from "discord.js-docs";
-export default class DiscordCommand extends Command {
-  public constructor() {
-    super("djs-docs", {
-      aliases: ["djs", "d.js", "djsdocs", "discordjs", "discord.js"],
-      description: {
-        content: "Searches discord.js documentation for what it thinks you mean. Defaults to using the main branch",
-        usage: "<query> <optional branch>",
-        examples: ["Guild#Members", "Guild#Members main"],
-      },
-      channel: "guild",
-      clientPermissions: ["EMBED_LINKS"],
-      ratelimit: 2,
-      args: [
-        {
-          id: "query",
-          match: "rest",
-          type: "lowercase",
-          prompt: {
-            start: "```\n" + "Enter the phrase you'd like to search for.\n" + "Example: Guild#channels" + "```",
-            retry: "Not a valid search phrase.",
-          },
-        },
-        {
-          id: "branch",
-          "type": "string",
-          default: "stable",
-        },
-      ],
-    });
-  }
+import { Command } from "../../interfaces";
+import { SlashCommandBuilder } from "@discordjs/builders";
+import Doc, { sources } from "discord.js-docs";
 
-  public async exec(message: Message, { query, branch }: { query: string; branch: string }): Promise<Message | Message[]> {
-    const str = query.split(" ");
-    const source = branch;
-    const doc = await Doc.fetch(source, {force: true});
-    const resultEmbed = doc.resolveEmbed(str.join("#"));
-    if (!resultEmbed) return;
-    // For typings of djs' embeds
-    const timeStampDate = new Date(resultEmbed.timestamp);
-    const embedObj = {...resultEmbed, timestamp: timeStampDate} ;
+const supportedBranches = Object.keys(sources).map((branch) => [capitalize(branch), branch] as [string, string]);
 
-    if (!embedObj) return;
+const command: Command = {
+    data: new SlashCommandBuilder()
+        .setName("djs")
+        .setDescription("Search discord.js documentations, supports builders, voice, collection and rpc documentations")
+        .addStringOption((option) =>
+            option
+                .setName("query")
+                .setDescription("Enter the phrase you'd like to search for, e.g: client#isready")
+                .setRequired(true),
+        )
+        .addStringOption((option) =>
+            option
+                .setName("source")
+                .setDescription("Select which branch/repository to get documentation off of")
+                .addChoices(supportedBranches)
+                .setRequired(false),
+        ),
+    async execute(interaction, context) {
+        const query = interaction.options.getString("query");
+        const source: keyof typeof sources =
+            (interaction.options.getString("source") as keyof typeof sources) || "stable";
 
-    return message.channel.send({ embed: embedObj });
-  }
+        const doc = await Doc.fetch(source, { force: true });
+
+        const notFoundEmbed = doc.baseEmbed();
+        notFoundEmbed.description = "Didn't find any results for that query";
+
+        const resultEmbed = doc.resolveEmbed(query);
+
+        if (!resultEmbed) {
+            const timeStampDate = new Date(notFoundEmbed.timestamp);
+            const embedObj = { ...notFoundEmbed, timestamp: timeStampDate };
+            return interaction.reply({ embeds: [embedObj] }).catch(console.error);
+        }
+
+        const timeStampDate = new Date(resultEmbed.timestamp);
+        const embedObj = { ...resultEmbed, timestamp: timeStampDate };
+        interaction.reply({ embeds: [embedObj] }).catch(console.error);
+        return;
+    },
+};
+
+function capitalize(str: string) {
+    return str
+        .split("-")
+        .map((splitStr) => splitStr[0].toUpperCase() + splitStr.substring(1))
+        .join("-");
 }
+
+export default command;

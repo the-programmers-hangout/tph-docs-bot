@@ -5,25 +5,32 @@
   "main": "dist/bot.js",
   "scripts": {
     "tsc": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "registerGuildCommands": "REGISTER_MODE=GUILD node dist/handlers/RegisterCommands.js",
+    "registerGlobalCommands": "REGISTER_MODE=GLOBAL node dist/handlers/RegisterCommands.js",
+    "resetGuildCommands": "REGISTER_MODE=RESET_GUILD node dist/handlers/RegisterCommands.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "discord-akairo": "^8.1.0",
-    "discord.js": "^12.5.1",
-    "discord.js-docs": "BenjammingKirby/discord.js-docs#typescriptRewrite",
+    "@discordjs/builders": "^0.8.2",
+    "@discordjs/rest": "^0.1.0-canary.0",
+    "discord-api-types": "^0.25.2",
+    "discord.js": "^13.3.1",
+    "discord.js-docs": "github:BenjammingKirby/discord.js-docs#typescriptRewrite",
     "dotenv": "^10.0.0",
+    "glob": "^7.2.0",
     "pm2": "^5.1.2"
   },
   "devDependencies": {
+    "@types/glob": "^7.2.0",
     "@types/ms": "^0.7.31",
     "@types/node": "^16.11.11",
     "@types/node-fetch": "^3.0.2",
     "@typescript-eslint/eslint-plugin": "^5.5.0",
     "@typescript-eslint/parser": "^5.5.0",
     "eslint": "^8.3.0",
-    "node-fetch": "^3.1.0",
+    "node-fetch": "^2.6.6",
     "prettier": "^2.5.0",
     "ts-node-dev": "^1.1.8",
     "typescript": "^4.5.2"
