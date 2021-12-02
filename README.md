@@ -2,15 +2,25 @@
 
 A Discord bot to display documentation
 
+## Currently supported docs
+
+* discord.js (includes main/stable branch, includes djs-voice, djs-builders and djs-collection documentations)
+
 ## Docker
 
 To build and run the Docker container locally:
 
 ```console
 docker build . -t tphdocsbot:latest
+```
 
+```console
 docker run -e TOKEN=<your discord token> -e APPLICATIONID=<ApplicationID> -e GUILDID=<GuildID> tphdocsbot:latest
-## or put the values in a local file and use that using..
+```
+
+Or put the values in a local file and use that using..
+
+```console
 docker run --env-file .env tphdocsbot:latest
 ```
 
