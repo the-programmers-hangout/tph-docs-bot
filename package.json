@@ -6,9 +6,10 @@
   "scripts": {
     "tsc": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "registerGuildCommands": "REGISTER_MODE=GUILD node dist/handlers/RegisterCommands.js",
-    "registerGlobalCommands": "REGISTER_MODE=GLOBAL node dist/handlers/RegisterCommands.js",
-    "resetGuildCommands": "REGISTER_MODE=RESET_GUILD node dist/handlers/RegisterCommands.js"
+    "register-guild-commands": "REGISTER_MODE=GUILD node dist/handlers/RegisterCommands.js",
+    "register-global-commands": "REGISTER_MODE=GLOBAL node dist/handlers/RegisterCommands.js",
+    "reset-guild-commands": "REGISTER_MODE=RESET_GUILD node dist/handlers/RegisterCommands.js",
+    "reset-global-commands": "REGISTER_MODE=RESET_GLOBAL node dist/handlers/RegisterCommands.js"
   },
   "author": "",
   "license": "ISC",

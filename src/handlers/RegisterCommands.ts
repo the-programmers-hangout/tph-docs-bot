@@ -21,7 +21,7 @@ if (!applicationId)
     'Please make sure the bot\'s application ID is mentioned on "APPLICATIONID"'
   );
 if (!token) throw new Error("Please make sure you add a token");
-if (registerMode !== "GLOBAL" && !guildId)
+if (["GUILD", "RESET_GUILD"].includes(registerMode) && !guildId)
   throw new Error("The target's guild id is needed but was not provided");
 
 const commands = [];
@@ -35,7 +35,9 @@ const rest = new REST({ version: "9" }).setToken(token);
   }
   console.info(
     `${
-      registerMode === "RESET_GUILD" ? "Resetting" : "Reloading"
+      ["RESET_GUILD", "RESET_GLOBAL"].includes(registerMode)
+        ? "Resetting"
+        : "Reloading"
     } application (/) commands for ${applicationId} ${
       guildId ? `on guild ${guildId}` : ""
     }: \n\t${commands
@@ -45,6 +47,10 @@ const rest = new REST({ version: "9" }).setToken(token);
   try {
     if (registerMode === "RESET_GUILD") {
       await rest.put(Routes.applicationGuildCommands(applicationId, guildId), {
+        body: [],
+      });
+    } else if (registerMode === "RESET_GLOBAL") {
+      await rest.put(Routes.applicationCommands(applicationId), {
         body: [],
       });
     } else if (registerMode === "GUILD") {
@@ -59,7 +65,9 @@ const rest = new REST({ version: "9" }).setToken(token);
 
     console.log(
       `Successfully ${
-        registerMode === "RESET_GUILD" ? "reset" : "reloaded"
+        ["RESET_GUILD", "RESET_GLOBAL"].includes(registerMode)
+          ? "reset"
+          : "reloaded"
       } application (/) commands.`
     );
   } catch (error) {
