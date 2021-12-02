@@ -21,6 +21,9 @@ import { loadCommands, commandHandler } from "./handlers/CommandHandler";
   await loadCommands(context);
   docsBot.on("error", console.error);
   docsBot.on("warn", console.warn);
+  docsBot.on("ready", (client) => {
+    console.log(`Logged in as ${client.user.tag} (${client.user.id})`);
+  });
   docsBot.on("interactionCreate", commandHandler.bind(null, context));
 
   docsBot.login(process.env.TOKEN);
