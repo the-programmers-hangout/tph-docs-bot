@@ -8,8 +8,9 @@ export async function commandHandler(
   interaction: Interaction
 ) {
   if (interaction.isCommand()) {
+    await interaction.deferReply();
     const command = context.commands.get(interaction.commandName);
-    if (!command) return interaction.reply(`Command not found`);
+    if (!command) return interaction.editReply(`Command not found`);
 
     if (commandPermissionCheck(interaction, command)) return;
     if (commandCooldownCheck(interaction, command, context)) return;
@@ -18,9 +19,7 @@ export async function commandHandler(
     } catch (e) {
       console.error(e);
       const errorMessage = "An error has occurred";
-      interaction.replied
-        ? interaction.reply(errorMessage).catch(console.error)
-        : interaction.editReply(errorMessage).catch(console.error);
+      interaction.editReply(errorMessage).catch(console.error);
     }
   }
 }
@@ -65,7 +64,9 @@ function commandPermissionCheck(
   if (channel.type === "DM" || !channel) {
     if (command.guildOnly) {
       interaction
-        .reply(`This is a guild exclusive command, not to be executed in a dm`)
+        .editReply(
+          `This is a guild exclusive command, not to be executed in a dm`
+        )
         .catch(console.error);
       // For guild only commands that were executed in a dm, cancel the command
       return true;
@@ -81,7 +82,7 @@ function commandPermissionCheck(
       .missing(botPermissions);
     if (missingPermissions.length > 0) {
       interaction
-        .reply(
+        .editReply(
           `In order to run this command, I need the following permissions: ${missingPermissions
             .map((perm) => `\`${perm}\``)
             .join(", ")}`
@@ -98,7 +99,7 @@ function commandPermissionCheck(
       .missing(authorPermissions);
     if (missingPermissions.length > 0) {
       interaction
-        .reply(
+        .editReply(
           `In order to run this command, you need: ${missingPermissions
             .map((perm) => `\`${perm}\``)
             .join(", ")}`
@@ -125,7 +126,7 @@ function commandCooldownCheck(
         return false;
       }
       interaction
-        .reply(
+        .editReply(
           `Please wait ${Formatters.time(
             Date.now() + existingCooldown,
             "R"

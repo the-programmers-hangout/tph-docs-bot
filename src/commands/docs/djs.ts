@@ -38,7 +38,8 @@ const command: Command = {
         if (!resultEmbed) {
             const timeStampDate = new Date(notFoundEmbed.timestamp);
             const embedObj = { ...notFoundEmbed, timestamp: timeStampDate };
-            return interaction.reply({ embeds: [embedObj] }).catch(console.error);
+            interaction.editReply({ embeds: [embedObj] }).catch(console.error);
+            return
         }
 
         const timeStampDate = new Date(resultEmbed.timestamp);
@@ -47,7 +48,7 @@ const command: Command = {
             // The final fields should be the View Source button
             embedObj.fields = [embedObj.fields?.at(-1)]
         }
-        interaction.reply({ embeds: [embedObj] }).catch(console.error);
+        interaction.editReply({ embeds: [embedObj] }).catch(console.error);
         return;
     },
 };
