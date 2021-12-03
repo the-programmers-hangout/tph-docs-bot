@@ -30,12 +30,11 @@ const command: Command = {
 
         const doc = await Doc.fetch(source, { force: true });
 
+        const resultEmbed = doc.resolveEmbed(query);
+        
         const notFoundEmbed = doc.baseEmbed();
         notFoundEmbed.description = "Didn't find any results for that query";
-
-        const resultEmbed = doc.resolveEmbed(query);
-
-        if (!resultEmbed) {
+        if (!resultEmbed || (resultEmbed.description === "")) {
             const timeStampDate = new Date(notFoundEmbed.timestamp);
             const embedObj = { ...notFoundEmbed, timestamp: timeStampDate };
             interaction.editReply({ embeds: [embedObj] }).catch(console.error);
