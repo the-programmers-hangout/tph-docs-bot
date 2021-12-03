@@ -1,6 +1,7 @@
 import { Command } from "../../interfaces";
 import { SlashCommandBuilder } from "@discordjs/builders";
 import Doc, { sources } from "discord.js-docs";
+import { checkEmbedLimits } from "../../utils/embedUtils";
 
 const supportedBranches = Object.keys(sources).map((branch) => [capitalize(branch), branch] as [string, string]);
 
@@ -23,6 +24,7 @@ const command: Command = {
         ),
     async execute(interaction, context) {
         const query = interaction.options.getString("query");
+        // The Default source should be stable
         const source: keyof typeof sources =
             (interaction.options.getString("source") as keyof typeof sources) || "stable";
 
@@ -40,7 +42,11 @@ const command: Command = {
         }
 
         const timeStampDate = new Date(resultEmbed.timestamp);
-        const embedObj = { ...resultEmbed, timestamp: timeStampDate };
+        let embedObj = {...resultEmbed, timestamp: timeStampDate};
+        if(!checkEmbedLimits([resultEmbed])) {
+            // The final fields should be the View Source button
+            embedObj.fields = [embedObj.fields?.at(-1)]
+        }
         interaction.reply({ embeds: [embedObj] }).catch(console.error);
         return;
     },
