@@ -3,49 +3,61 @@ import { SlashCommandBuilder } from "@discordjs/builders";
 import Doc, { sources } from "discord.js-docs";
 import { checkEmbedLimits } from "../../utils/embedUtils";
 
-const supportedBranches = Object.keys(sources).map((branch) => [capitalize(branch), branch] as [string, string]);
+const supportedBranches = Object.keys(sources).map(
+    (branch) => [capitalize(branch), branch] as [string, string]
+);
 
 const command: Command = {
     data: new SlashCommandBuilder()
         .setName("djs")
-        .setDescription("Search discord.js documentations, supports builders, voice, collection and rpc documentations")
+        .setDescription(
+            "Search discord.js documentations, supports builders, voice, collection and rpc documentations"
+        )
         .addStringOption((option) =>
             option
                 .setName("query")
-                .setDescription("Enter the phrase you'd like to search for, e.g: client#isready")
-                .setRequired(true),
+                .setDescription(
+                    "Enter the phrase you'd like to search for, e.g: client#isready"
+                )
+                .setRequired( true )
         )
         .addStringOption((option) =>
             option
                 .setName("source")
-                .setDescription("Select which branch/repository to get documentation off of")
+                .setDescription(
+                    "Select which branch/repository to get documentation off of"
+                )
                 .addChoices(supportedBranches)
-                .setRequired(false),
+                .setRequired( false )
         ),
-    async execute(interaction, context) {
+    async execute(interaction) {
         const query = interaction.options.getString("query");
         // The Default source should be stable
         const source: keyof typeof sources =
-            (interaction.options.getString("source") as keyof typeof sources) || "stable";
+      ( interaction.options.getString( "source" ) as keyof typeof sources ) ||
+      "stable";
 
         const doc = await Doc.fetch(source, { force: true });
 
         const resultEmbed = doc.resolveEmbed(query);
-        
+
         const notFoundEmbed = doc.baseEmbed();
         notFoundEmbed.description = "Didn't find any results for that query";
-        if (!resultEmbed || (resultEmbed.description === "")) {
+        if ( !resultEmbed || resultEmbed.description === "" ) {
+
             const timeStampDate = new Date(notFoundEmbed.timestamp);
             const embedObj = { ...notFoundEmbed, timestamp: timeStampDate };
+
             interaction.editReply({ embeds: [embedObj] }).catch(console.error);
-            return
+            return;
         }
 
         const timeStampDate = new Date(resultEmbed.timestamp);
-        let embedObj = {...resultEmbed, timestamp: timeStampDate};
-        if(!checkEmbedLimits([resultEmbed])) {
+        const embedObj = { ...resultEmbed, timestamp: timeStampDate };
+        
+        if (!checkEmbedLimits([resultEmbed])) {
             // The final fields should be the View Source button
-            embedObj.fields = [embedObj.fields?.at(-1)]
+            embedObj.fields = [embedObj.fields?.at( -1 )];
         }
         interaction.editReply({ embeds: [embedObj] }).catch(console.error);
         return;

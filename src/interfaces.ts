@@ -1,13 +1,12 @@
 import type {
-  Client,
-  CommandInteraction,
-  Collection,
-  PermissionString,
-  Snowflake,
+    Client,
+    CommandInteraction,
+    Collection,
+    PermissionString,
 } from "discord.js";
 import type {
-  SlashCommandBuilder,
-  SlashCommandSubcommandsOnlyBuilder,
+    SlashCommandBuilder,
+    SlashCommandSubcommandsOnlyBuilder,
 } from "@discordjs/builders";
 type SlashCommandOptionsType = ReturnType<
   SlashCommandBuilder["addChannelOption"]
