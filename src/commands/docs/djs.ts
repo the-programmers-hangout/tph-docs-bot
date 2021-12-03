@@ -25,7 +25,7 @@ const command: Command = {
             option
                 .setName("source")
                 .setDescription(
-                    "Select which branch/repository to get documentation off of"
+                    "Select which branch/repository to get documentation off of (Default: stable)"
                 )
                 .addChoices(supportedBranches)
                 .setRequired( false )
@@ -43,9 +43,11 @@ const command: Command = {
 
         const notFoundEmbed = doc.baseEmbed();
         notFoundEmbed.description = "Didn't find any results for that query";
+        // If a result wasn't found
         if ( !resultEmbed || resultEmbed.description === "" ) {
 
             const timeStampDate = new Date(notFoundEmbed.timestamp);
+            // Satisfies the method's MessageEmbedOption type 
             const embedObj = { ...notFoundEmbed, timestamp: timeStampDate };
 
             interaction.editReply({ embeds: [embedObj] }).catch(console.error);
@@ -54,9 +56,11 @@ const command: Command = {
 
         const timeStampDate = new Date(resultEmbed.timestamp);
         const embedObj = { ...resultEmbed, timestamp: timeStampDate };
-        
+
+        //! "checkEmbedLimits" does not support MessageEmbed objects due to the properties being null by default, use a raw embed object for this method
+        // Check if the embed exceeds any of the limits
         if (!checkEmbedLimits([resultEmbed])) {
-            // The final fields should be the View Source button
+            // The final field should be the View Source button
             embedObj.fields = [embedObj.fields?.at( -1 )];
         }
         interaction.editReply({ embeds: [embedObj] }).catch(console.error);

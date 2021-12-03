@@ -11,7 +11,7 @@ import { loadCommands, commandHandler } from "./handlers/CommandHandler";
                 activities: [{ type: "WATCHING", name: "Discord.JS channel" }],
                 status: "online",
             },
-            // For DMs, now on dms a partial channel is received
+            // For DMs, a partial channel object is received, in order to receive dms, CHANNEL partials must be activated  
             partials: ["CHANNEL"],
         }),
         commands: new Collection(),

@@ -56,12 +56,14 @@ export function loadCommands(context: MyContext) {
  * @param command
  * @returns Whether to cancel the command
  */
+// * Note that as of writing, slash commands can override permissions 
 function commandPermissionCheck(
     interaction: CommandInteraction,
     command: Command
 ): boolean {
     const { client, user, channel } = interaction;
-    // If the channel is a dm, if it's a partial, channel.type wouldn't exist
+    // If the channel is a dm
+    // if it's a partial, channel.type wouldn't exist
     if (channel.type === "DM" || !channel) {
         if (command.guildOnly) {
             interaction
@@ -128,8 +130,9 @@ function commandCooldownCheck(
             }
             interaction
                 .editReply(
+                    //TODO revert to using custom logic to send remaining time as the discord timestamp formatting isn't very descriptive
                     `Please wait ${Formatters.time(
-                        Date.now() + existingCooldown,
+                        existingCooldown,
                         "R"
                     )} before using the command again`
                 )

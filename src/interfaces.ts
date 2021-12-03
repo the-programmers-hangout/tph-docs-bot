@@ -22,6 +22,7 @@ export interface Command {
     | SlashCommandSubcommandsOnlyBuilder
     | SlashCommandOptionsType;
   cooldown?: number;
+  // * Note that as of writing, slash commands can override permissions
   botPermissions?: PermissionString[];
   authorPermissions?: PermissionString[];
   guildOnly?: boolean;
