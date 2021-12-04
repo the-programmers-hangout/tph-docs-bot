@@ -6,4 +6,4 @@ RUN npm install
 COPY . .
 RUN npm run tsc
 WORKDIR /usr/app/dist
-CMD node bot.js
+CMD npm run register-global-commands ; node bot.js
