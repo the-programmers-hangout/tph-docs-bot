@@ -29,17 +29,18 @@ const command: Command = {
                 )
                 .addChoices(supportedBranches)
                 .setRequired( false )
-        ),
+        ).addBooleanOption(option => option.setName("private").setDescription("Whether or not to search private elements (default false)").setRequired(false)),
     async execute(interaction) {
         const query = interaction.options.getString("query");
         // The Default source should be stable
         const source: keyof typeof sources =
       ( interaction.options.getString( "source" ) as keyof typeof sources ) ||
       "stable";
-
+        // Whether to include private elements on the search results, by default false, shows private elements if the search returns an exact result; 
+        const searchPrivate = interaction.options.getBoolean("private") || false;
         const doc = await Doc.fetch(source, { force: true });
 
-        const resultEmbed = doc.resolveEmbed(query);
+        const resultEmbed = doc.resolveEmbed(query, {excludePrivateElements: !searchPrivate});
 
         const notFoundEmbed = doc.baseEmbed();
         notFoundEmbed.description = "Didn't find any results for that query";

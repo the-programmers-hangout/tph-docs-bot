@@ -18,12 +18,6 @@ docker build . -t tphdocsbot:latest
 docker run -e TOKEN=<your discord token> -e APPLICATIONID=<ApplicationID> -e GUILDID=<GuildID> tphdocsbot:latest
 ```
 
-Or put the values in a local file and use that using..
-
-```console
-docker run --env-file .env tphdocsbot:latest
-```
-
 ### Cofiguration
 
 * `TOKEN` [required] the Discord bot token to run under
