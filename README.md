@@ -35,7 +35,7 @@ docker run --env-file .env tphdocsbot:latest
 In order to register the commands globally, run
 
 ```console
-npm run register-guild-commands
+npm run register-global-commands
 ```
 
 For registering guild-specific commands (Recommended for testing)
