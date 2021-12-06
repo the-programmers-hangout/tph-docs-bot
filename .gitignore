@@ -28,3 +28,9 @@ typings/
 .env
 .env.test
 .env*.local
+
+### Misc ###
+*.DS_Store
+*.vscode
+*.xml
+*.gz
