@@ -4,7 +4,7 @@
     "noImplicitAny": false,
     "module": "commonjs",
     "target": "es2017",
-    "lib": ["es7"],
+    "lib": ["es7", "DOM"],
     "moduleResolution": "node",
     "baseUrl": "./src",
     "sourceMap": false,
