@@ -20,6 +20,8 @@
     "discord.js": "^13.3.1",
     "discord.js-docs": "github:BenjammingKirby/discord.js-docs#typescriptRewrite",
     "dotenv": "^10.0.0",
+    "fast-xml-parser": "^4.0.0-beta.7",
+    "flexsearch": "^0.7.21",
     "glob": "^7.2.0",
     "pm2": "^5.1.2"
   },
