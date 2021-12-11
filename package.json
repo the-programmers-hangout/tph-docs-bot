@@ -5,11 +5,12 @@
   "main": "dist/bot.js",
   "scripts": {
     "tsc": "tsc",
+    "start": "npm run tsc && npm run register-global-commands && node dist/bot.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "register-guild-commands": "REGISTER_MODE=GUILD node dist/handlers/RegisterCommands.js",
-    "register-global-commands": "REGISTER_MODE=GLOBAL node dist/handlers/RegisterCommands.js",
-    "reset-guild-commands": "REGISTER_MODE=RESET_GUILD node dist/handlers/RegisterCommands.js",
-    "reset-global-commands": "REGISTER_MODE=RESET_GLOBAL node dist/handlers/RegisterCommands.js"
+    "register-guild-commands": "cross-env REGISTER_MODE=GUILD node dist/handlers/RegisterCommands.js",
+    "register-global-commands": "cross-env REGISTER_MODE=GLOBAL node dist/handlers/RegisterCommands.js",
+    "reset-guild-commands": "cross-env REGISTER_MODE=RESET_GUILD node dist/handlers/RegisterCommands.js",
+    "reset-global-commands": "cross-env REGISTER_MODE=RESET_GLOBAL node dist/handlers/RegisterCommands.js"
   },
   "author": "",
   "license": "ISC",
@@ -20,14 +21,20 @@
     "discord.js": "^13.3.1",
     "discord.js-docs": "github:BenjammingKirby/discord.js-docs#typescriptRewrite",
     "dotenv": "^10.0.0",
+    "fast-xml-parser": "^4.0.0-beta.7",
+    "flexsearch": "^0.7.21",
     "glob": "^7.2.0",
+    "node-fetch": "^2.6.6",
     "pm2": "^5.1.2"
   },
   "devDependencies": {
+    "@types/flexsearch": "^0.7.2",
     "@types/glob": "^7.2.0",
     "@types/node": "^16.11.11",
+    "@types/node-fetch": "^2.5.12",
     "@typescript-eslint/eslint-plugin": "^5.5.0",
     "@typescript-eslint/parser": "^5.5.0",
+    "cross-env": "^7.0.3",
     "eslint": "^8.3.0",
     "prettier": "^2.5.0",
     "ts-node-dev": "^1.1.8",

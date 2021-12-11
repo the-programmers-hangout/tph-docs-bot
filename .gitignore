@@ -6,6 +6,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+package-lock.json
 node_modules/
 dist/
 # TypeScript v1 declaration files
@@ -27,3 +28,9 @@ typings/
 .env
 .env.test
 .env*.local
+
+### Misc ###
+*.DS_Store
+*.vscode
+*.xml
+*.gz

@@ -1,3 +1,4 @@
+
 import { Command } from "../../interfaces";
 import { SlashCommandBuilder } from "@discordjs/builders";
 import Doc, { sources } from "discord.js-docs";
