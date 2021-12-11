@@ -5,31 +5,39 @@
   "main": "dist/bot.js",
   "scripts": {
     "tsc": "tsc",
-    "start": "node dist/bot.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "npm run tsc && npm run register-global-commands && node dist/bot.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "register-guild-commands": "cross-env REGISTER_MODE=GUILD node dist/handlers/RegisterCommands.js",
+    "register-global-commands": "cross-env REGISTER_MODE=GLOBAL node dist/handlers/RegisterCommands.js",
+    "reset-guild-commands": "cross-env REGISTER_MODE=RESET_GUILD node dist/handlers/RegisterCommands.js",
+    "reset-global-commands": "cross-env REGISTER_MODE=RESET_GLOBAL node dist/handlers/RegisterCommands.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "discord-akairo": "^8.1.0",
-    "discord.js": "^12.5.1",
-    "discord.js-docs": "^0.1.2",
+    "@discordjs/builders": "^0.8.2",
+    "@discordjs/rest": "^0.1.0-canary.0",
+    "discord-api-types": "^0.25.2",
+    "discord.js": "^13.3.1",
+    "discord.js-docs": "github:BenjammingKirby/discord.js-docs#typescriptRewrite",
     "dotenv": "^10.0.0",
-    "fast-xml-parser": "^4.0.0-beta.6",
+    "fast-xml-parser": "^4.0.0-beta.7",
     "flexsearch": "^0.7.21",
+    "glob": "^7.2.0",
     "node-fetch": "^2.6.6",
     "pm2": "^5.1.2"
   },
   "devDependencies": {
     "@types/flexsearch": "^0.7.2",
-    "@types/ms": "^0.7.31",
-    "@types/node": "^14.14.19",
-    "@types/node-fetch": "^2.5.7",
-    "@typescript-eslint/eslint-plugin": "^4.11.1",
-    "@typescript-eslint/parser": "^4.11.1",
-    "eslint": "^7.17.0",
-    "prettier": "^2.2.1",
-    "ts-node-dev": "^1.1.1",
-    "typescript": "^4.1.3"
+    "@types/glob": "^7.2.0",
+    "@types/node": "^16.11.11",
+    "@types/node-fetch": "^2.5.12",
+    "@typescript-eslint/eslint-plugin": "^5.5.0",
+    "@typescript-eslint/parser": "^5.5.0",
+    "cross-env": "^7.0.3",
+    "eslint": "^8.3.0",
+    "prettier": "^2.5.0",
+    "ts-node-dev": "^1.1.8",
+    "typescript": "^4.5.2"
   }
 }

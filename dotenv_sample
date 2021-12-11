@@ -1,2 +1,8 @@
-TOKEN = ENTER_BOT_TOKEN_HERE
-PREFIX = >
+# Your bot's token
+TOKEN=ENTER_BOT_TOKEN_HERE
+
+# The bot's application id, get it from https://discord.com/developers/applications -> your bot -> General Information -> Application ID 
+APPLICATIONID=1234567890123456789
+
+# The ID of the guild on which the commands will be registered to (if the commands are being registered on a guild)
+GUILDID=1234567890123456789
