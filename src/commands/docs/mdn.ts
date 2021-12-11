@@ -1,25 +1,27 @@
+import { SlashCommandBuilder } from "@discordjs/builders";
 import { MessageEmbed } from "discord.js";
 import { gunzipSync } from "zlib";
 import { XMLParser } from "fast-xml-parser";
+import { Command } from "../../interfaces";
 import fetch from "node-fetch";
 import flexsearch from "flexsearch";
 
-import { Command } from "../../interfaces";
-import { SlashCommandBuilder } from "@discordjs/builders";
 interface SitemapEntry<T extends string | number> {
     loc: string;
     lastmod: T;
 }
 type Sitemap<T extends string | number> = SitemapEntry<T>[];
 
-const baseURL = "https://developer.mozilla.org/en-US/docs/" as const;
 let sources = {
     index: null as flexsearch.Index,
     sitemap: null as Sitemap<number>,
     lastUpdated: null as number,
 };
-const MDN_BLUE_COLOR = 0x83bfff as const;
+
+const MDN_BASE_URL = "https://developer.mozilla.org/en-US/docs/" as const;
 const MDN_ICON_URL = "https://i.imgur.com/1P4wotC.png" as const;
+const MDN_BLUE_COLOR = 0x83BFFF as const;
+
 const command: Command = {
     data: new SlashCommandBuilder()
         .setName("mdn")
@@ -40,16 +42,16 @@ const command: Command = {
             .setTitle(`Search for: ${query}`);
 
         if (!search.length) {
-            embed.setColor(0xff0000).setDescription("No results found...");
+            embed.setColor(0xFF0000).setDescription("No results found...");
             interaction.editReply({ embeds: [embed] });
             return;
         }
 
         if (search.length === 1) {
-            const res = await fetch(`${baseURL + search[0]}/index.json`);
+            const res = await fetch(`${MDN_BASE_URL + search[0]}/index.json`);
             const doc: MdnDoc = (await res.json()).doc;
             const docEmbed = embed
-                .setColor(0xffffff)
+                .setColor(0xFFFFFF)
                 .setTitle(doc.pageTitle)
                 .setURL(`https://developer.mozilla.org/${doc.mdn_url}`)
                 .setThumbnail(this.MDN_ICON_URL)
@@ -58,7 +60,7 @@ const command: Command = {
             return;
         }
 
-        const results = search.map((path) => `**• [${path.replace(/_|-/g, " ")}](${baseURL}${path})**`);
+        const results = search.map((path) => `**• [${path.replace(/_|-/g, " ")}](${MDN_BASE_URL}${path})**`);
         embed.setDescription(results.join("\n"));
         interaction.editReply({ embeds: [embed] });
         return;
@@ -74,7 +76,7 @@ async function getSources(): Promise<typeof sources> {
     const sitemap: Sitemap<number> = new XMLParser()
         .parse(gunzipSync(await res.buffer()).toString())
         .urlset.url.map((entry: SitemapEntry<string>) => ({
-            loc: entry.loc.slice(baseURL.length),
+            loc: entry.loc.slice(MDN_BASE_URL.length),
             lastmod: new Date(entry.lastmod).valueOf(),
         }));
 
@@ -89,9 +91,7 @@ interface MdnDoc {
     isMarkdown: boolean;
     isTranslated: boolean;
     isActive: boolean;
-    //TODO Fix this
-    // eslint-disable-next-line
-    flaws: {};
+    flaws: Record<string, unknown>;
     title: string;
     mdn_url: string;
     locale: string;
@@ -128,4 +128,5 @@ interface MdnDoc {
     pageTitle: string;
     noIndexing: boolean;
 }
+
 export default command;

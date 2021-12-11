@@ -5,11 +5,12 @@
   "main": "dist/bot.js",
   "scripts": {
     "tsc": "tsc",
+    "start": "npm run tsc && npm run register-global-commands && node dist/bot.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "register-guild-commands": "REGISTER_MODE=GUILD node dist/handlers/RegisterCommands.js",
-    "register-global-commands": "REGISTER_MODE=GLOBAL node dist/handlers/RegisterCommands.js",
-    "reset-guild-commands": "REGISTER_MODE=RESET_GUILD node dist/handlers/RegisterCommands.js",
-    "reset-global-commands": "REGISTER_MODE=RESET_GLOBAL node dist/handlers/RegisterCommands.js"
+    "register-guild-commands": "cross-env REGISTER_MODE=GUILD node dist/handlers/RegisterCommands.js",
+    "register-global-commands": "cross-env REGISTER_MODE=GLOBAL node dist/handlers/RegisterCommands.js",
+    "reset-guild-commands": "cross-env REGISTER_MODE=RESET_GUILD node dist/handlers/RegisterCommands.js",
+    "reset-global-commands": "cross-env REGISTER_MODE=RESET_GLOBAL node dist/handlers/RegisterCommands.js"
   },
   "author": "",
   "license": "ISC",
@@ -33,6 +34,7 @@
     "@types/node-fetch": "^2.5.12",
     "@typescript-eslint/eslint-plugin": "^5.5.0",
     "@typescript-eslint/parser": "^5.5.0",
+    "cross-env": "^7.0.3",
     "eslint": "^8.3.0",
     "prettier": "^2.5.0",
     "ts-node-dev": "^1.1.8",
