@@ -6,7 +6,7 @@ export async function messageHandler(message: Message<true>) {
     try {
         const clientUser = message.client.user;
         // The regex for the bot's mention
-        const mentionRegex = new RegExp(`<@!?${clientUser.id}>`);
+        const mentionRegex = new RegExp(`^<@!?${clientUser.id}>$`);
 
         if (message.content.trim().match(mentionRegex)) {
             const pkgJSONPath = "../../package.json";
