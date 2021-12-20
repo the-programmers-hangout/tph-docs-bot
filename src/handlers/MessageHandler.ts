@@ -19,7 +19,7 @@ export async function messageHandler(message: Message<true>) {
                 .setURL("https://github.com/the-programmers-hangout/tph-docs-bot/")
                 .setColor(0xd250c7)
                 .setDescription(description)
-                .setThumbnail(clientUser.displayAvatarURL({ dynamic: true, format: "png", size: 4096 }))
+                .setThumbnail(clientUser.displayAvatarURL({ dynamic: true, format: "png", size: 256 }))
                 .addField(
                     "Currently Supported Docs",
                     ["discord.js", "Javascript (mdn)"].map((str) => `\`${str}\``).join(", "),
