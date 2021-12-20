@@ -39,7 +39,7 @@ const rest = new REST({ version: "9" }).setToken(token);
                 ? "Resetting"
                 : "Reloading"
         } application (/) commands for ${applicationId} ${
-            guildId ? `on guild ${guildId}` : ""
+            ["GUILD", "RESET_GUILD"].includes(registerMode)  ? `on guild ${guildId}` : ""
         }: \n\t${commands
             .map((cmd) => cmd.name)
             .join("\n\t")}\nOn mode: "${registerMode}"`

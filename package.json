@@ -1,7 +1,7 @@
 {
   "name": "tph_docs_bot",
   "version": "1.0.0",
-  "description": "A bot made for TPH (The Programmers Hangout - discord.gg/programming) ",
+  "description": "A Discord bot to display documentation ",
   "main": "dist/bot.js",
   "scripts": {
     "tsc": "tsc",
@@ -17,6 +17,7 @@
   "dependencies": {
     "@discordjs/builders": "^0.8.2",
     "@discordjs/rest": "^0.1.0-canary.0",
+    "date-fns": "^2.27.0",
     "discord-api-types": "^0.25.2",
     "discord.js": "^13.3.1",
     "discord.js-docs": "github:BenjammingKirby/discord.js-docs#typescriptRewrite",
