@@ -1,7 +1,7 @@
 {
   "name": "tph_docs_bot",
   "version": "1.0.0",
-  "description": "A bot made for TPH (The Programmers Hangout - discord.gg/programming) ",
+  "description": "A Discord bot to display documentation ",
   "main": "dist/bot.js",
   "scripts": {
     "tsc": "tsc",

@@ -2,7 +2,7 @@
 import { Command } from "../../interfaces";
 import { SlashCommandBuilder } from "@discordjs/builders";
 import Doc, { sources } from "discord.js-docs";
-import { checkEmbedLimits } from "../../utils/embedUtils";
+import { checkEmbedLimits } from "../../utils/EmbedUtils";
 
 const supportedBranches = Object.keys(sources).map(
     (branch) => [capitalize(branch), branch] as [string, string]

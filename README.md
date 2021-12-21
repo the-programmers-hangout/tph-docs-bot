@@ -5,6 +5,7 @@ A Discord bot to display documentation
 ## Currently supported docs
 
 * discord.js (includes main/stable branch, includes djs-voice, djs-builders and djs-collection documentations)
+* Javascript ([mdn](https://developer.mozilla.org/))
 
 ## Docker
 
