@@ -27,7 +27,7 @@ export async function messageHandler(message: Message<true>) {
                 .addField("Dependencies", Formatters.codeBlock("json", JSON.stringify(dependencies, undefined, 4)))
                 .addField("Uptime", `${intervalObjToStr(uptime)}` || "Just turned on")
                 .addField("Ping", message.client.ws.ping + "ms", true)
-                .addField("Source", "[Github](https://github.com/the-programmers-hangout/tph-docs-bot/)", true)
+                .addField("Source", "[GitHub](https://github.com/the-programmers-hangout/tph-docs-bot/)", true)
                 .addField(
                     "Contributors",
                     "[Link](https://github.com/the-programmers-hangout/tph-docs-bot/graphs/contributors)",
