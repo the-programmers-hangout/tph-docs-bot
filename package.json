@@ -15,10 +15,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@discordjs/builders": "^0.8.2",
-    "@discordjs/rest": "^0.1.0-canary.0",
-    "discord-api-types": "^0.25.2",
-    "discord.js": "^13.3.1",
+    "@discordjs/builders": "^0.11.0",
+    "@discordjs/rest": "^0.2.0-canary.0",
+    "discord-api-types": "^0.26.1",
+    "discord.js": "^13.5.1",
     "discord.js-docs": "github:BenjammingKirby/discord.js-docs#typescriptRewrite",
     "dotenv": "^10.0.0",
     "fast-xml-parser": "^4.0.0-beta.7",
@@ -38,6 +38,6 @@
     "eslint": "^8.3.0",
     "prettier": "^2.5.0",
     "ts-node-dev": "^1.1.8",
-    "typescript": "^4.5.2"
+    "typescript": "^4.5.4"
   }
 }
