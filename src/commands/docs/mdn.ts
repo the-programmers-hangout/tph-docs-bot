@@ -1,5 +1,6 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
-import { MessageEmbed } from "discord.js";
+import { deleteButton } from "../../utils/CommandUtils";
+import { MessageActionRow, MessageEmbed } from "discord.js";
 import { gunzipSync } from "zlib";
 import { XMLParser } from "fast-xml-parser";
 import { Command } from "../../interfaces";
@@ -20,7 +21,7 @@ let sources = {
 
 const MDN_BASE_URL = "https://developer.mozilla.org/en-US/docs/" as const;
 const MDN_ICON_URL = "https://i.imgur.com/1P4wotC.png" as const;
-const MDN_BLUE_COLOR = 0x83BFFF as const;
+const MDN_BLUE_COLOR = 0x83bfff as const;
 
 const command: Command = {
     data: new SlashCommandBuilder()
@@ -33,17 +34,18 @@ const command: Command = {
                 .setRequired(true),
         ),
     async execute(interaction) {
+        const deleteButtonRow = new MessageActionRow().addComponents([deleteButton]);
         const query = interaction.options.getString("query");
         const { index, sitemap } = await getSources();
         const search: string[] = index.search(query, { limit: 10 }).map((id) => sitemap[<number>id].loc);
         const embed = new MessageEmbed()
             .setColor(MDN_BLUE_COLOR)
-            .setAuthor("MDN Documentation", MDN_ICON_URL)
+            .setAuthor({ name: "MDN Documentation", iconURL: MDN_ICON_URL })
             .setTitle(`Search for: ${query}`);
 
         if (!search.length) {
-            embed.setColor(0xFF0000).setDescription("No results found...");
-            interaction.editReply({ embeds: [embed] });
+            embed.setColor(0xff0000).setDescription("No results found...");
+            interaction.editReply({ embeds: [embed], components: [deleteButtonRow] });
             return;
         }
 
@@ -51,18 +53,18 @@ const command: Command = {
             const res = await fetch(`${MDN_BASE_URL + search[0]}/index.json`);
             const doc: MdnDoc = (await res.json()).doc;
             const docEmbed = embed
-                .setColor(0xFFFFFF)
+                .setColor(0xffffff)
                 .setTitle(doc.pageTitle)
                 .setURL(`https://developer.mozilla.org/${doc.mdn_url}`)
                 .setThumbnail(this.MDN_ICON_URL)
                 .setDescription(doc.summary);
-            interaction.editReply({ embeds: [docEmbed] });
+            interaction.editReply({ embeds: [docEmbed], components: [deleteButtonRow] });
             return;
         }
 
         const results = search.map((path) => `**• [${path.replace(/_|-/g, " ")}](${MDN_BASE_URL}${path})**`);
         embed.setDescription(results.join("\n"));
-        interaction.editReply({ embeds: [embed] });
+        interaction.editReply({ embeds: [embed], components: [deleteButtonRow] });
         return;
     },
 };

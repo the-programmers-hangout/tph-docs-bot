@@ -2,6 +2,8 @@ import { Command } from "../../interfaces";
 import { SlashCommandBuilder } from "@discordjs/builders";
 import Doc, { sources } from "discord.js-docs";
 import { checkEmbedLimits } from "../../utils/EmbedUtils";
+import { deleteButton } from "../../utils/CommandUtils";
+import { MessageActionRow } from "discord.js";
 
 const supportedBranches = Object.keys(sources).map((branch) => [capitalize(branch), branch] as [string, string]);
 
@@ -29,6 +31,7 @@ const command: Command = {
                 .setRequired(false),
         ),
     async execute(interaction) {
+        const deleteButtonRow = new MessageActionRow().addComponents([deleteButton]);
         const query = interaction.options.getString("query");
         // The Default source should be stable
         const source: keyof typeof sources =
@@ -47,7 +50,7 @@ const command: Command = {
             // Satisfies the method's MessageEmbedOption type
             const embedObj = { ...notFoundEmbed, timestamp: timeStampDate };
 
-            interaction.editReply({ embeds: [embedObj] }).catch(console.error);
+            interaction.editReply({ embeds: [embedObj], components: [deleteButtonRow] }).catch(console.error);
             return;
         }
 
@@ -60,7 +63,7 @@ const command: Command = {
             // The final field should be the View Source button
             embedObj.fields = [embedObj.fields?.at(-1)];
         }
-        interaction.editReply({ embeds: [embedObj] }).catch(console.error);
+        interaction.editReply({ embeds: [embedObj], components: [deleteButtonRow] }).catch(console.error);
         return;
     },
 };

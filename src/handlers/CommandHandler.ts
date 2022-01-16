@@ -1,12 +1,10 @@
 import glob from "glob";
 import type { Command, MyContext } from "../interfaces";
-import type { CommandInteraction, Interaction } from "discord.js";
-import { Permissions, Formatters } from "discord.js";
+import type { CommandInteraction, Interaction, Message } from "discord.js";
+import { Permissions, Formatters, MessageActionRow } from "discord.js";
+import { deleteButton } from "../utils/CommandUtils";
 
-export async function commandHandler(
-    context: MyContext,
-    interaction: Interaction
-) {
+export async function interactionCreateHandler(context: MyContext, interaction: Interaction) {
     if (interaction.isCommand()) {
         await interaction.deferReply();
         const command = context.commands.get(interaction.commandName);
@@ -19,7 +17,27 @@ export async function commandHandler(
         } catch (e) {
             console.error(e);
             const errorMessage = "An error has occurred";
-            interaction.editReply(errorMessage).catch(console.error);
+            interaction
+                .editReply({
+                    content: errorMessage,
+                    components: [new MessageActionRow().addComponents([deleteButton])],
+                })
+                .catch(console.error);
+        }
+    }
+    if (interaction.isButton()) {
+        // The delete button
+        if (interaction.customId === "deletebtn") {
+            // If the button clicker is the command initiator
+            if (interaction.user.id === interaction.message.interaction.user.id) {
+                (interaction.message as Message).delete().catch(console.error);
+            } else
+                interaction
+                    .reply({
+                        content: "Only the command initiator is allowed to delete this message",
+                        ephemeral: true,
+                    })
+                    .catch(console.error);
         }
     }
 }
@@ -31,20 +49,18 @@ export async function commandHandler(
 export function loadCommands(context: MyContext) {
     // Promisifies the process of glob
     return new Promise((resolve) => {
-    // Find all js files
+        // Find all js files
         glob(`${__dirname}/../commands/**/*.js`, async (err, files) => {
             await Promise.all(
                 files.map(async (file) => {
-                    const { default: myCommandFile }: { default: Command } = await import(
-                        file
-                    ).catch((err) => {
+                    const { default: myCommandFile }: { default: Command } = await import(file).catch((err) => {
                         console.error(err);
                         // Since the return value gets destructured, an empty object is returned
                         return {};
                     });
                     if (!myCommandFile) return;
                     context.commands.set(myCommandFile.data.name, myCommandFile);
-                })
+                }),
             );
             resolve(undefined);
         });
@@ -56,21 +72,14 @@ export function loadCommands(context: MyContext) {
  * @param command
  * @returns Whether to cancel the command
  */
-// * Note that as of writing, slash commands can override permissions 
-function commandPermissionCheck(
-    interaction: CommandInteraction,
-    command: Command
-): boolean {
+// * Note that as of writing, slash commands can override permissions
+function commandPermissionCheck(interaction: CommandInteraction, command: Command): boolean {
     const { client, user, channel } = interaction;
     // If the channel is a dm
     // if it's a partial, channel.type wouldn't exist
     if (channel.type === "DM" || !channel) {
         if (command.guildOnly) {
-            interaction
-                .editReply(
-                    "This is a guild exclusive command, not to be executed in a dm"
-                )
-                .catch(console.error);
+            interaction.editReply("This is a guild exclusive command, not to be executed in a dm").catch(console.error);
             // For guild only commands that were executed in a dm, cancel the command
             return true;
         }
@@ -80,15 +89,13 @@ function commandPermissionCheck(
     if (command.botPermissions) {
         const botPermissions = new Permissions(command.botPermissions);
         // The required permissions for the bot to run the command, missing in the channel.
-        const missingPermissions = channel
-            .permissionsFor(client.user)
-            .missing(botPermissions);
+        const missingPermissions = channel.permissionsFor(client.user).missing(botPermissions);
         if (missingPermissions.length > 0) {
             interaction
                 .editReply(
                     `In order to run this command, I need the following permissions: ${missingPermissions
                         .map((perm) => `\`${perm}\``)
-                        .join(", ")}`
+                        .join(", ")}`,
                 )
                 .catch(console.error);
             return true;
@@ -97,15 +104,13 @@ function commandPermissionCheck(
     if (command.authorPermissions) {
         const authorPermissions = new Permissions(command.authorPermissions);
         // The required permissions for the user to run the command, missing in the channel.
-        const missingPermissions = channel
-            .permissionsFor(user.id)
-            .missing(authorPermissions);
+        const missingPermissions = channel.permissionsFor(user.id).missing(authorPermissions);
         if (missingPermissions.length > 0) {
             interaction
                 .editReply(
                     `In order to run this command, you need: ${missingPermissions
                         .map((perm) => `\`${perm}\``)
-                        .join(", ")}`
+                        .join(", ")}`,
                 )
                 .catch(console.error);
             return true;
@@ -114,11 +119,7 @@ function commandPermissionCheck(
     // By default, allow execution;
     return false;
 }
-function commandCooldownCheck(
-    interaction: CommandInteraction,
-    command: Command,
-    context: MyContext
-): boolean {
+function commandCooldownCheck(interaction: CommandInteraction, command: Command, context: MyContext): boolean {
     const { user } = interaction;
     if (command.cooldown) {
         const id = user.id + "/" + interaction.commandName;
@@ -131,18 +132,12 @@ function commandCooldownCheck(
             interaction
                 .editReply(
                     //TODO revert to using custom logic to send remaining time as the discord timestamp formatting isn't very descriptive
-                    `Please wait ${Formatters.time(
-                        existingCooldown,
-                        "R"
-                    )} before using the command again`
+                    `Please wait ${Formatters.time(existingCooldown, "R")} before using the command again`,
                 )
                 .catch(console.error);
             return true;
         }
-        context.cooldownCounter.set(
-            user.id + "/" + interaction.commandName,
-            Date.now() + command.cooldown
-        );
+        context.cooldownCounter.set(user.id + "/" + interaction.commandName, Date.now() + command.cooldown);
     }
     return false;
 }
