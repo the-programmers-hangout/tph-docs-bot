@@ -3,7 +3,8 @@ import { SlashCommandBuilder } from "@discordjs/builders";
 import Doc, { sources } from "discord.js-docs";
 import { checkEmbedLimits } from "../../utils/EmbedUtils";
 import { deleteButton } from "../../utils/CommandUtils";
-import { MessageActionRow } from "discord.js";
+import { MessageActionRow, MessageSelectMenu } from "discord.js";
+import { APIEmbed } from "discord-api-types";
 
 const supportedBranches = Object.keys(sources).map((branch) => [capitalize(branch), branch] as [string, string]);
 
@@ -31,7 +32,7 @@ const command: Command = {
                 .setRequired(false),
         ),
     async execute(interaction) {
-        const deleteButtonRow = new MessageActionRow().addComponents([deleteButton]);
+        const deleteButtonRow = new MessageActionRow().addComponents([deleteButton(interaction.user.id)]);
         const query = interaction.options.getString("query");
         // The Default source should be stable
         const source: keyof typeof sources =
@@ -40,20 +41,36 @@ const command: Command = {
         const searchPrivate = interaction.options.getBoolean("private") || false;
         const doc = await Doc.fetch(source, { force: true });
 
-        const resultEmbed = doc.resolveEmbed(query, { excludePrivateElements: !searchPrivate });
-
-        const notFoundEmbed = doc.baseEmbed();
-        notFoundEmbed.description = "Didn't find any results for that query";
+        // const resultEmbed = doc.resolveEmbed(query, { excludePrivateElements: !searchPrivate });
+        const result = searchDJSDoc(doc, query, searchPrivate);
         // If a result wasn't found
-        if (!resultEmbed || resultEmbed.description === "") {
+        if (!result || (result as APIEmbed).description === "") {
+            const notFoundEmbed = doc.baseEmbed();
+            notFoundEmbed.description = "Didn't find any results for that query";
+
             const timeStampDate = new Date(notFoundEmbed.timestamp);
             // Satisfies the method's MessageEmbedOption type
             const embedObj = { ...notFoundEmbed, timestamp: timeStampDate };
 
-            interaction.editReply({ embeds: [embedObj], components: [deleteButtonRow] }).catch(console.error);
+            await interaction.reply({ embeds: [embedObj], ephemeral: true }).catch(console.error);
+            return;
+        } else if (Array.isArray(result)) {
+            const selectMenuRow = new MessageActionRow().addComponents(
+                new MessageSelectMenu()
+                    .setCustomId(`djsselect/${source}/${searchPrivate}/${interaction.user.id}`)
+                    .addOptions(result)
+                    .setPlaceholder("Select documentation to send"),
+            );
+            await interaction
+                .reply({
+                    content: "Didn't find an exact match, please select one from below",
+                    ephemeral: true,
+                    components: [selectMenuRow],
+                })
+                .catch(console.error);
             return;
         }
-
+        const resultEmbed = result;
         const timeStampDate = new Date(resultEmbed.timestamp);
         const embedObj = { ...resultEmbed, timestamp: timeStampDate };
 
@@ -63,7 +80,7 @@ const command: Command = {
             // The final field should be the View Source button
             embedObj.fields = [embedObj.fields?.at(-1)];
         }
-        interaction.editReply({ embeds: [embedObj], components: [deleteButtonRow] }).catch(console.error);
+        await interaction.reply({ embeds: [embedObj], components: [deleteButtonRow] }).catch(console.error);
         return;
     },
 };
@@ -73,6 +90,45 @@ function capitalize(str: string) {
         .split("-")
         .map((splitStr) => splitStr[0].toUpperCase() + splitStr.substring(1))
         .join("-");
+}
+
+export function searchDJSDoc(doc: Doc, query: string, searchPrivate?: boolean) {
+    const options = { excludePrivateElements: !searchPrivate };
+
+    const singleElement = doc.get(...query.split(/\.|#/));
+    if (singleElement) return singleElement.embed(options);
+
+    const searchResults = doc.search(query, options);
+    if (!searchResults) return null;
+    return searchResults.map((res) => {
+        const description = res.description.length >= 99 ? res.description.slice(0, 96) + "..." : res.description;
+        return {
+            label: res.formattedName,
+            description,
+            emoji: resolveRegionalEmoji(res.embedPrefix),
+            value: res.formattedName,
+        };
+    });
+}
+function resolveRegionalEmoji(regionalEmoji: string) {
+    const character = regionalEmoji.match(/:regional_indicator_(.):/)?.[1];
+    if (!character) return null;
+    switch (character) {
+        case "c":
+            return "🇨";
+        case "e":
+            return "🇪";
+        case "i":
+            return "🇮";
+        case "m":
+            return "🇲";
+        case "t":
+            return "🇹";
+        case "p":
+            return "🇵";
+        default:
+            return null;
+    }
 }
 
 export default command;
