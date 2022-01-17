@@ -4,7 +4,7 @@ import Doc, { sources } from "discord.js-docs";
 import { checkEmbedLimits } from "../../utils/EmbedUtils";
 import { deleteButton } from "../../utils/CommandUtils";
 import { MessageActionRow, MessageSelectMenu } from "discord.js";
-import { APIEmbed } from "discord-api-types";
+import type { APIEmbed } from "discord-api-types";
 
 const supportedBranches = Object.keys(sources).map((branch) => [capitalize(branch), branch] as [string, string]);
 
@@ -55,6 +55,8 @@ const command: Command = {
             await interaction.reply({ embeds: [embedObj], ephemeral: true }).catch(console.error);
             return;
         } else if (Array.isArray(result)) {
+            // If there are multiple results, send a select menu from which the user can choose which one to send
+
             const selectMenuRow = new MessageActionRow().addComponents(
                 new MessageSelectMenu()
                     .setCustomId(`djsselect/${source}/${searchPrivate}/${interaction.user.id}`)
@@ -92,15 +94,18 @@ function capitalize(str: string) {
         .join("-");
 }
 
+// Export to reuse on the select menu handler
 export function searchDJSDoc(doc: Doc, query: string, searchPrivate?: boolean) {
     const options = { excludePrivateElements: !searchPrivate };
 
     const singleElement = doc.get(...query.split(/\.|#/));
+    // Return embed for the single element, the exact match
     if (singleElement) return singleElement.embed(options);
 
     const searchResults = doc.search(query, options);
     if (!searchResults) return null;
     return searchResults.map((res) => {
+        // Labels and values have a limit of 100 characters
         const description = res.description.length >= 99 ? res.description.slice(0, 96) + "..." : res.description;
         return {
             label: res.formattedName,
@@ -110,6 +115,11 @@ export function searchDJSDoc(doc: Doc, query: string, searchPrivate?: boolean) {
         };
     });
 }
+/**
+ * Return the unicode version of the regional emojis
+ * @param regionalEmoji
+ * @returns The unicode version of the emoji
+ */
 function resolveRegionalEmoji(regionalEmoji: string) {
     const character = regionalEmoji.match(/:regional_indicator_(.):/)?.[1];
     if (!character) return null;

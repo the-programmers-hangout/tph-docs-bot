@@ -58,6 +58,7 @@ const command: Command = {
 
             return;
         } else {
+            // If there are multiple results, send a select menu from which the user can choose which one to send
             const results = search.map((path) => `**• [${path.replace(/_|-/g, " ")}](${MDN_BASE_URL}${path})**`);
 
             embed.setDescription(results.join("\n"));
@@ -84,6 +85,7 @@ const command: Command = {
     },
 };
 
+// Export to reuse on the select menu handler
 export async function getSingleMDNSearchResults(searchQuery: string) {
     const res = await fetch(`${MDN_BASE_URL + searchQuery}/index.json`);
     const doc: MdnDoc = (await res.json()).doc;
