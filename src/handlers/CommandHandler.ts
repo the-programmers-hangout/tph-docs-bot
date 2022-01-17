@@ -65,48 +65,43 @@ async function commandInteractionHandler(context: MyContext, interaction: Comman
 }
 async function selectMenuInteractionHandler(context: MyContext, interaction: SelectMenuInteraction) {
     const CommandName = interaction.customId.split("/")[0];
-    if (!CommandName)
-        switch (CommandName) {
-            case "mdnselect": {
-                const Initiator = interaction.customId.split("/")[1];
-                const deleteButtonRow = new MessageActionRow().addComponents([deleteButton(Initiator)]);
-                const selectedValue = interaction.values[0];
-                const resultEmbed = await getSingleMDNSearchResults(selectedValue);
+    switch (CommandName) {
+        case "mdnselect": {
+            const Initiator = interaction.customId.split("/")[1];
+            const deleteButtonRow = new MessageActionRow().addComponents([deleteButton(Initiator)]);
+            const selectedValue = interaction.values[0];
+            const resultEmbed = await getSingleMDNSearchResults(selectedValue);
 
-                // Remove the menu and update the ephemeral message
-                await interaction
-                    .update({ content: "Sent documentation for " + selectedValue, components: [] })
-                    .catch(console.error);
-                // Send documentation
-                await interaction
-                    .followUp({ embeds: [resultEmbed], components: [deleteButtonRow] })
-                    .catch(console.error);
-                break;
-            }
-
-            case "djsselect": {
-                const selectedValue = interaction.values[0];
-                const [, source, searchPrivate, Initiator] = interaction.customId.split("/");
-                const deleteButtonRow = new MessageActionRow().addComponents([deleteButton(Initiator)]);
-
-                const doc = await Doc.fetch(source, { force: true });
-
-                const resultEmbed = searchDJSDoc(doc, selectedValue, searchPrivate === "true") as APIEmbed;
-
-                // Remove the menu and update the ephemeral message
-                await interaction
-                    .update({ content: "Sent documentation for " + selectedValue, components: [] })
-                    .catch(console.error);
-                // Send documentation
-                await interaction
-                    .followUp({ embeds: [resultEmbed], components: [deleteButtonRow] })
-                    .catch(console.error);
-                break;
-            }
-            default: {
-                interaction.reply({ content: "Unknown menu", ephemeral: true }).catch(console.error);
-            }
+            // Remove the menu and update the ephemeral message
+            await interaction
+                .update({ content: "Sent documentations for " + selectedValue, components: [] })
+                .catch(console.error);
+            // Send documentation
+            await interaction.followUp({ embeds: [resultEmbed], components: [deleteButtonRow] }).catch(console.error);
+            break;
         }
+
+        case "djsselect": {
+            const selectedValue = interaction.values[0];
+            const [, source, searchPrivate, Initiator] = interaction.customId.split("/");
+            const deleteButtonRow = new MessageActionRow().addComponents([deleteButton(Initiator)]);
+
+            const doc = await Doc.fetch(source, { force: true });
+
+            const resultEmbed = searchDJSDoc(doc, selectedValue, searchPrivate === "true") as APIEmbed;
+
+            // Remove the menu and update the ephemeral message
+            await interaction
+                .update({ content: "Sent documentations for " + selectedValue, components: [] })
+                .catch(console.error);
+            // Send documentation
+            await interaction.followUp({ embeds: [resultEmbed], components: [deleteButtonRow] }).catch(console.error);
+            break;
+        }
+        default: {
+            interaction.reply({ content: "Unknown menu", ephemeral: true }).catch(console.error);
+        }
+    }
 }
 async function buttonInteractionHandler(context: MyContext, interaction: ButtonInteraction<"cached">) {
     // The delete button
