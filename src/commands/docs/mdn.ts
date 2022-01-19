@@ -1,5 +1,6 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
-import { MessageEmbed } from "discord.js";
+import { deleteButton } from "../../utils/CommandUtils";
+import { MessageActionRow, MessageEmbed, MessageSelectMenu } from "discord.js";
 import { gunzipSync } from "zlib";
 import { XMLParser } from "fast-xml-parser";
 import { Command } from "../../interfaces";
@@ -20,7 +21,7 @@ let sources = {
 
 const MDN_BASE_URL = "https://developer.mozilla.org/en-US/docs/" as const;
 const MDN_ICON_URL = "https://i.imgur.com/1P4wotC.png" as const;
-const MDN_BLUE_COLOR = 0x83BFFF as const;
+const MDN_BLUE_COLOR = 0x83bfff as const;
 
 const command: Command = {
     data: new SlashCommandBuilder()
@@ -33,52 +34,81 @@ const command: Command = {
                 .setRequired(true),
         ),
     async execute(interaction) {
+        const deleteButtonRow = new MessageActionRow().addComponents([deleteButton(interaction.user.id)]);
         const query = interaction.options.getString("query");
         const { index, sitemap } = await getSources();
         const search: string[] = index.search(query, { limit: 10 }).map((id) => sitemap[<number>id].loc);
         const embed = new MessageEmbed()
             .setColor(MDN_BLUE_COLOR)
-            .setAuthor("MDN Documentation", MDN_ICON_URL)
-            .setTitle(`Search for: ${query}`);
+            .setAuthor({ name: "MDN Documentation", iconURL: MDN_ICON_URL })
+            .setTitle(`Search for: ${query.slice(0, 243)}`);
 
         if (!search.length) {
-            embed.setColor(0xFF0000).setDescription("No results found...");
-            interaction.editReply({ embeds: [embed] });
+            embed.setColor(0xff0000).setDescription("No results found...");
+            await interaction.reply({ embeds: [embed], ephemeral: true });
+            return;
+        } else if (search.length === 1) {
+            const resultEmbed = await getSingleMDNSearchResults(search[0]);
+            await interaction
+                .reply({
+                    embeds: [resultEmbed],
+                    components: [deleteButtonRow],
+                })
+                .catch(console.error);
+
+            return;
+        } else {
+            // If there are multiple results, send a select menu from which the user can choose which one to send
+            const results = search.map((path) => `**• [${path.replace(/_|-/g, " ")}](${MDN_BASE_URL}${path})**`);
+
+            embed.setDescription(results.join("\n"));
+            const selectMenuRow = new MessageActionRow().addComponents(
+                new MessageSelectMenu()
+                    .setCustomId("mdnselect/" + interaction.user.id)
+                    .addOptions(
+                        search.map((val) => {
+                            const parsed = val.length >= 99 ? val.split("/").at(-1) : val;
+                            return { label: parsed, value: parsed };
+                        }),
+                    )
+                    .setPlaceholder("Select documentation to send"),
+            );
+            await interaction
+                .reply({
+                    content: "Didn't find an exact match, please select one from below",
+                    ephemeral: true,
+                    components: [selectMenuRow],
+                })
+                .catch(console.error);
             return;
         }
-
-        if (search.length === 1) {
-            const res = await fetch(`${MDN_BASE_URL + search[0]}/index.json`);
-            const doc: MdnDoc = (await res.json()).doc;
-            const docEmbed = embed
-                .setColor(0xFFFFFF)
-                .setTitle(doc.pageTitle)
-                .setURL(`https://developer.mozilla.org/${doc.mdn_url}`)
-                .setThumbnail(this.MDN_ICON_URL)
-                .setDescription(doc.summary);
-            interaction.editReply({ embeds: [docEmbed] });
-            return;
-        }
-
-        const results = search.map((path) => `**• [${path.replace(/_|-/g, " ")}](${MDN_BASE_URL}${path})**`);
-        embed.setDescription(results.join("\n"));
-        interaction.editReply({ embeds: [embed] });
-        return;
     },
 };
 
+// Export to reuse on the select menu handler
+export async function getSingleMDNSearchResults(searchQuery: string) {
+    const res = await fetch(`${MDN_BASE_URL + searchQuery}/index.json`);
+    const doc: MdnDoc = (await res.json()).doc;
+
+    return new MessageEmbed()
+        .setColor(MDN_BLUE_COLOR)
+        .setAuthor({ name: "MDN Documentation", iconURL: MDN_ICON_URL })
+        .setColor(0xffffff)
+        .setTitle(doc.pageTitle)
+        .setURL(`https://developer.mozilla.org/${doc.mdn_url}`)
+        .setThumbnail(MDN_ICON_URL)
+        .setDescription(doc.summary);
+}
 async function getSources(): Promise<typeof sources> {
     if (sources.lastUpdated && Date.now() - sources.lastUpdated < 43200000 /* 12 hours */) return sources;
 
     const res = await fetch("https://developer.mozilla.org/sitemaps/en-us/sitemap.xml.gz");
     if (!res.ok) return sources; // Fallback to old sources if the new ones are not available for any reason
-
-    const sitemap: Sitemap<number> = new XMLParser()
-        .parse(gunzipSync(await res.buffer()).toString())
-        .urlset.url.map((entry: SitemapEntry<string>) => ({
-            loc: entry.loc.slice(MDN_BASE_URL.length),
-            lastmod: new Date(entry.lastmod).valueOf(),
-        }));
+    const something = new XMLParser().parse(gunzipSync(await res.buffer()).toString());
+    const sitemap: Sitemap<number> = something.urlset.url.map((entry: SitemapEntry<string>) => ({
+        loc: entry.loc.slice(MDN_BASE_URL.length),
+        lastmod: new Date(entry.lastmod).valueOf(),
+    }));
 
     const index = new flexsearch.Index();
     sitemap.forEach((entry, idx) => index.add(idx, entry.loc));

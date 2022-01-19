@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { Client, Collection, LimitedCollection } from "discord.js";
 import { MyContext } from "./interfaces";
-import { loadCommands, commandHandler } from "./handlers/CommandHandler";
+import { loadCommands, interactionCreateHandler } from "./handlers/CommandHandler";
 import { messageHandler } from "./handlers/MessageHandler";
 
 (async function () {
@@ -42,7 +42,7 @@ import { messageHandler } from "./handlers/MessageHandler";
     });
 
     docsBot.on("messageCreate", messageHandler);
-    docsBot.on("interactionCreate", commandHandler.bind(null, context));
+    docsBot.on("interactionCreate", interactionCreateHandler.bind(null, context));
 
     docsBot.login(process.env.TOKEN);
 })();

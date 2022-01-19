@@ -1,26 +1,22 @@
-import glob from "glob";
 import type { Command, MyContext } from "../interfaces";
-import type { CommandInteraction, Interaction } from "discord.js";
-import { Permissions, Formatters } from "discord.js";
+import type { ButtonInteraction, CommandInteraction, Interaction, Message, SelectMenuInteraction } from "discord.js";
+import type { APIEmbed } from "discord-api-types";
 
-export async function commandHandler(
-    context: MyContext,
-    interaction: Interaction
-) {
+import { commandCooldownCheck, commandPermissionCheck, deleteButton } from "../utils/CommandUtils";
+import { getSingleMDNSearchResults } from "../commands/docs/mdn";
+import { searchDJSDoc } from "../commands/docs/djs";
+import { MessageActionRow } from "discord.js";
+
+import glob from "glob";
+import Doc from "discord.js-docs";
+
+export async function interactionCreateHandler(context: MyContext, interaction: Interaction<"cached">) {
     if (interaction.isCommand()) {
-        await interaction.deferReply();
-        const command = context.commands.get(interaction.commandName);
-        if (!command) return interaction.editReply("Command not found");
-
-        if (commandPermissionCheck(interaction, command)) return;
-        if (commandCooldownCheck(interaction, command, context)) return;
-        try {
-            await command.execute(interaction, context);
-        } catch (e) {
-            console.error(e);
-            const errorMessage = "An error has occurred";
-            interaction.editReply(errorMessage).catch(console.error);
-        }
+        commandInteractionHandler(context, interaction);
+    } else if (interaction.isButton()) {
+        buttonInteractionHandler(context, interaction);
+    } else if (interaction.isSelectMenu()) {
+        selectMenuInteractionHandler(context, interaction);
     }
 }
 /**
@@ -31,118 +27,97 @@ export async function commandHandler(
 export function loadCommands(context: MyContext) {
     // Promisifies the process of glob
     return new Promise((resolve) => {
-    // Find all js files
+        // Find all js files
         glob(`${__dirname}/../commands/**/*.js`, async (err, files) => {
             await Promise.all(
                 files.map(async (file) => {
-                    const { default: myCommandFile }: { default: Command } = await import(
-                        file
-                    ).catch((err) => {
+                    const { default: myCommandFile }: { default: Command } = await import(file).catch((err) => {
                         console.error(err);
                         // Since the return value gets destructured, an empty object is returned
                         return {};
                     });
                     if (!myCommandFile) return;
                     context.commands.set(myCommandFile.data.name, myCommandFile);
-                })
+                }),
             );
             resolve(undefined);
         });
     });
 }
-/**
- * Checks if the bot or a user has the needed permissions to run a command
- * @param interaction
- * @param command
- * @returns Whether to cancel the command
- */
-// * Note that as of writing, slash commands can override permissions 
-function commandPermissionCheck(
-    interaction: CommandInteraction,
-    command: Command
-): boolean {
-    const { client, user, channel } = interaction;
-    // If the channel is a dm
-    // if it's a partial, channel.type wouldn't exist
-    if (channel.type === "DM" || !channel) {
-        if (command.guildOnly) {
-            interaction
-                .editReply(
-                    "This is a guild exclusive command, not to be executed in a dm"
-                )
-                .catch(console.error);
-            // For guild only commands that were executed in a dm, cancel the command
-            return true;
-        }
-        // If it's not a guild only command, since permissions aren't a thing on dms, allow execution
-        return false;
+async function commandInteractionHandler(context: MyContext, interaction: CommandInteraction) {
+    const command = context.commands.get(interaction.commandName);
+    if (!command) return interaction.reply({ content: "Command not found", ephemeral: true });
+
+    if (commandPermissionCheck(interaction, command)) return;
+    if (commandCooldownCheck(interaction, command, context)) return;
+    try {
+        await command.execute(interaction, context);
+    } catch (e) {
+        console.error(e);
+        const errorMessage = "An error has occurred";
+        interaction
+            .reply({
+                content: errorMessage,
+                ephemeral: true,
+            })
+            .catch(console.error);
     }
-    if (command.botPermissions) {
-        const botPermissions = new Permissions(command.botPermissions);
-        // The required permissions for the bot to run the command, missing in the channel.
-        const missingPermissions = channel
-            .permissionsFor(client.user)
-            .missing(botPermissions);
-        if (missingPermissions.length > 0) {
-            interaction
-                .editReply(
-                    `In order to run this command, I need the following permissions: ${missingPermissions
-                        .map((perm) => `\`${perm}\``)
-                        .join(", ")}`
-                )
-                .catch(console.error);
-            return true;
-        }
-    }
-    if (command.authorPermissions) {
-        const authorPermissions = new Permissions(command.authorPermissions);
-        // The required permissions for the user to run the command, missing in the channel.
-        const missingPermissions = channel
-            .permissionsFor(user.id)
-            .missing(authorPermissions);
-        if (missingPermissions.length > 0) {
-            interaction
-                .editReply(
-                    `In order to run this command, you need: ${missingPermissions
-                        .map((perm) => `\`${perm}\``)
-                        .join(", ")}`
-                )
-                .catch(console.error);
-            return true;
-        }
-    }
-    // By default, allow execution;
-    return false;
 }
-function commandCooldownCheck(
-    interaction: CommandInteraction,
-    command: Command,
-    context: MyContext
-): boolean {
-    const { user } = interaction;
-    if (command.cooldown) {
-        const id = user.id + "/" + interaction.commandName;
-        const existingCooldown = context.cooldownCounter.get(id);
-        if (existingCooldown) {
-            if (Date.now() >= existingCooldown) {
-                context.cooldownCounter.delete(id);
-                return false;
-            }
-            interaction
-                .editReply(
-                    //TODO revert to using custom logic to send remaining time as the discord timestamp formatting isn't very descriptive
-                    `Please wait ${Formatters.time(
-                        existingCooldown,
-                        "R"
-                    )} before using the command again`
-                )
+async function selectMenuInteractionHandler(context: MyContext, interaction: SelectMenuInteraction) {
+    const CommandName = interaction.customId.split("/")[0];
+    switch (CommandName) {
+        case "mdnselect": {
+            const Initiator = interaction.customId.split("/")[1];
+            const deleteButtonRow = new MessageActionRow().addComponents([deleteButton(Initiator)]);
+            const selectedValue = interaction.values[0];
+            const resultEmbed = await getSingleMDNSearchResults(selectedValue);
+
+            // Remove the menu and update the ephemeral message
+            await interaction
+                .update({ content: "Sent documentations for " + selectedValue, components: [] })
                 .catch(console.error);
-            return true;
+            // Send documentation
+            await interaction.followUp({ embeds: [resultEmbed], components: [deleteButtonRow] }).catch(console.error);
+            break;
         }
-        context.cooldownCounter.set(
-            user.id + "/" + interaction.commandName,
-            Date.now() + command.cooldown
-        );
+
+        case "djsselect": {
+            const selectedValue = interaction.values[0];
+            const [, source, searchPrivate, Initiator] = interaction.customId.split("/");
+            const deleteButtonRow = new MessageActionRow().addComponents([deleteButton(Initiator)]);
+
+            const doc = await Doc.fetch(source, { force: true });
+
+            const resultEmbed = searchDJSDoc(doc, selectedValue, searchPrivate === "true") as APIEmbed;
+
+            // Remove the menu and update the ephemeral message
+            await interaction
+                .update({ content: "Sent documentations for " + selectedValue, components: [] })
+                .catch(console.error);
+            // Send documentation
+            await interaction.followUp({ embeds: [resultEmbed], components: [deleteButtonRow] }).catch(console.error);
+            break;
+        }
+        default: {
+            interaction.reply({ content: "Unknown menu", ephemeral: true }).catch(console.error);
+        }
     }
-    return false;
 }
+async function buttonInteractionHandler(context: MyContext, interaction: ButtonInteraction<"cached">) {
+    // The delete button
+    if (interaction.customId.startsWith("deletebtn")) {
+        const commandInitiatorId = interaction.customId.replace("deletebtn/", "");
+        // If the button clicker is the command initiator
+        if (interaction.user.id === commandInitiatorId) {
+            (interaction.message as Message).delete().catch(console.error);
+        } else
+            interaction
+                .reply({
+                    content: "Only the command initiator is allowed to delete this message",
+                    ephemeral: true,
+                })
+                .catch(console.error);
+    }
+}
+// TODO add autocomplete
+// async function autocompleteInteractionHandler(context: MyContext, interaction: AutocompleteInteraction) {}s
