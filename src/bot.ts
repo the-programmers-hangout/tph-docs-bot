@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { Client, Collection, LimitedCollection } from "discord.js";
 import { MyContext } from "./interfaces";
-import { loadCommands, interactionCreateHandler } from "./handlers/CommandHandler";
+import { loadCommands, interactionCreateHandler } from "./handlers/InteractionCreateHandler";
 import { messageHandler } from "./handlers/MessageHandler";
 
 (async function () {

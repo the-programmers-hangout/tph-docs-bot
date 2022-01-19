@@ -31,7 +31,8 @@ const command: Command = {
             opt
                 .setName("query")
                 .setDescription("Enter the phrase you'd like to search for. Example: Array.filter")
-                .setRequired(true),
+                .setRequired(true)
+                .setAutocomplete(true),
         ),
     async execute(interaction) {
         const deleteButtonRow = new MessageActionRow().addComponents([deleteButton(interaction.user.id)]);
@@ -45,10 +46,15 @@ const command: Command = {
 
         if (!search.length) {
             embed.setColor(0xff0000).setDescription("No results found...");
-            await interaction.reply({ embeds: [embed], ephemeral: true });
+            await interaction.reply({ embeds: [embed], ephemeral: true }).catch(console.error);
             return;
         } else if (search.length === 1) {
             const resultEmbed = await getSingleMDNSearchResults(search[0]);
+            if (!resultEmbed) {
+                await interaction.reply({ content: "Couldn't find any results", ephemeral: true }).catch(console.error);
+                return;
+            }
+
             await interaction
                 .reply({
                     embeds: [resultEmbed],
@@ -59,15 +65,12 @@ const command: Command = {
             return;
         } else {
             // If there are multiple results, send a select menu from which the user can choose which one to send
-            const results = search.map((path) => `**• [${path.replace(/_|-/g, " ")}](${MDN_BASE_URL}${path})**`);
-
-            embed.setDescription(results.join("\n"));
             const selectMenuRow = new MessageActionRow().addComponents(
                 new MessageSelectMenu()
                     .setCustomId("mdnselect/" + interaction.user.id)
                     .addOptions(
                         search.map((val) => {
-                            const parsed = val.length >= 99 ? val.split("/").at(-1) : val;
+                            const parsed = val.length >= 99 ? val.split("/").slice(-2).join("/") : val;
                             return { label: parsed, value: parsed };
                         }),
                     )
@@ -87,8 +90,16 @@ const command: Command = {
 
 // Export to reuse on the select menu handler
 export async function getSingleMDNSearchResults(searchQuery: string) {
-    const res = await fetch(`${MDN_BASE_URL + searchQuery}/index.json`);
-    const doc: MdnDoc = (await res.json()).doc;
+    // Search for the match once again
+    const { index, sitemap } = await getSources();
+    const secondSearch = index.search(searchQuery, { limit: 10 }).map((id) => sitemap[<number>id].loc)[0];
+
+    const res = await fetch(`${MDN_BASE_URL + secondSearch}/index.json`).catch(console.error);
+    if (!res || !res?.ok) return null;
+    const resJSON = await res.json?.().catch(console.error);
+    if (!res.json) return null;
+
+    const doc: MdnDoc = resJSON.doc;
 
     return new MessageEmbed()
         .setColor(MDN_BLUE_COLOR)
@@ -99,7 +110,7 @@ export async function getSingleMDNSearchResults(searchQuery: string) {
         .setThumbnail(MDN_ICON_URL)
         .setDescription(doc.summary);
 }
-async function getSources(): Promise<typeof sources> {
+export async function getSources(): Promise<typeof sources> {
     if (sources.lastUpdated && Date.now() - sources.lastUpdated < 43200000 /* 12 hours */) return sources;
 
     const res = await fetch("https://developer.mozilla.org/sitemaps/en-us/sitemap.xml.gz");
@@ -109,7 +120,6 @@ async function getSources(): Promise<typeof sources> {
         loc: entry.loc.slice(MDN_BASE_URL.length),
         lastmod: new Date(entry.lastmod).valueOf(),
     }));
-
     const index = new flexsearch.Index();
     sitemap.forEach((entry, idx) => index.add(idx, entry.loc));
 

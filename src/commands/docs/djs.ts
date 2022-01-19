@@ -16,7 +16,8 @@ const command: Command = {
             option
                 .setName("query")
                 .setDescription("Enter the phrase you'd like to search for, e.g: client#isready")
-                .setRequired(true),
+                .setRequired(true)
+                .setAutocomplete(true),
         )
         .addStringOption((option) =>
             option
@@ -39,8 +40,12 @@ const command: Command = {
             (interaction.options.getString("source") as keyof typeof sources) || "stable";
         // Whether to include private elements on the search results, by default false, shows private elements if the search returns an exact result;
         const searchPrivate = interaction.options.getBoolean("private") || false;
-        const doc = await Doc.fetch(source, { force: true });
+        const doc = await Doc.fetch(source, { force: true }).catch(console.error);
 
+        if (!doc) {
+            await interaction.reply({ content: "Couldn't fetch docs", ephemeral: true }).catch(console.error);
+            return;
+        }
         // const resultEmbed = doc.resolveEmbed(query, { excludePrivateElements: !searchPrivate });
         const result = searchDJSDoc(doc, query, searchPrivate);
         // If a result wasn't found
