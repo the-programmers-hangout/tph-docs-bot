@@ -1,9 +1,16 @@
 import type { Command, MyContext } from "../interfaces";
-import type { ButtonInteraction, CommandInteraction, Interaction, Message, SelectMenuInteraction } from "discord.js";
+import type {
+    AutocompleteInteraction,
+    ButtonInteraction,
+    CommandInteraction,
+    Interaction,
+    Message,
+    SelectMenuInteraction,
+} from "discord.js";
 import type { APIEmbed } from "discord-api-types";
 
 import { commandCooldownCheck, commandPermissionCheck, deleteButton } from "../utils/CommandUtils";
-import { getSingleMDNSearchResults } from "../commands/docs/mdn";
+import { getSingleMDNSearchResults, getSources } from "../commands/docs/mdn";
 import { searchDJSDoc } from "../commands/docs/djs";
 import { MessageActionRow } from "discord.js";
 
@@ -11,12 +18,18 @@ import glob from "glob";
 import Doc from "discord.js-docs";
 
 export async function interactionCreateHandler(context: MyContext, interaction: Interaction<"cached">) {
-    if (interaction.isCommand()) {
-        commandInteractionHandler(context, interaction);
-    } else if (interaction.isButton()) {
-        buttonInteractionHandler(context, interaction);
-    } else if (interaction.isSelectMenu()) {
-        selectMenuInteractionHandler(context, interaction);
+    try {
+        if (interaction.isCommand()) {
+            await commandInteractionHandler(context, interaction);
+        } else if (interaction.isButton()) {
+            await buttonInteractionHandler(context, interaction);
+        } else if (interaction.isSelectMenu()) {
+            await selectMenuInteractionHandler(context, interaction);
+        } else if (interaction.isAutocomplete()) {
+            await autocompleteInteractionHandler(context, interaction);
+        }
+    } catch (e) {
+        console.error(e);
     }
 }
 /**
@@ -119,5 +132,40 @@ async function buttonInteractionHandler(context: MyContext, interaction: ButtonI
                 .catch(console.error);
     }
 }
-// TODO add autocomplete
-// async function autocompleteInteractionHandler(context: MyContext, interaction: AutocompleteInteraction) {}s
+
+async function autocompleteInteractionHandler(context: MyContext, interaction: AutocompleteInteraction) {
+    switch (interaction.commandName) {
+        case "djs": {
+            // Check the cache, the command will force fetch anyway
+            const doc = await Doc.fetch("stable", { force: false });
+            const query = interaction.options.getFocused() as string;
+            const singleElement = doc.get(...query.split(/\.|#/));
+            if (singleElement) {
+                await interaction
+                    .respond([{ name: singleElement.formattedName, value: singleElement.formattedName }])
+                    .catch(console.error);
+                return;
+            }
+            const searchResults = doc.search(query, { excludePrivateElements: false });
+            if (!searchResults) {
+                await interaction.respond([]).catch(console.error);
+                return;
+            }
+            await interaction
+                .respond(searchResults.map((elem) => ({ name: elem.formattedName, value: elem.formattedName })))
+                .catch(console.error);
+            break;
+        }
+        case "mdn": {
+            const query = interaction.options.getFocused() as string;
+
+            const { index, sitemap } = await getSources();
+            const search = index.search(query, { limit: 10 }).map((id) => {
+                const val = sitemap[<number>id].loc;
+                const parsed = val.length >= 99 ? val.split("/").slice(-2).join("/") : val;
+                return { name: parsed, value: parsed };
+            });
+            await interaction.respond(search).catch(console.error);
+        }
+    }
+}
