@@ -46,17 +46,19 @@ const command: Command = {
 
         if (!search.length) {
             embed.setColor(0xff0000).setDescription("No results found...");
-            await interaction.reply({ embeds: [embed], ephemeral: true }).catch(console.error);
+            await interaction.editReply({ embeds: [embed] }).catch(console.error);
             return;
         } else if (search.length === 1) {
             const resultEmbed = await getSingleMDNSearchResults(search[0]);
             if (!resultEmbed) {
-                await interaction.reply({ content: "Couldn't find any results", ephemeral: true }).catch(console.error);
+                await interaction.editReply({ content: "Couldn't find any results" }).catch(console.error);
                 return;
             }
-
             await interaction
-                .reply({
+                .editReply("Sent documentation for " + (query.length >= 100 ? query.slice(0, 100) + "..." : query))
+                .catch(console.error);
+            await interaction
+                .followUp({
                     embeds: [resultEmbed],
                     components: [deleteButtonRow],
                 })
@@ -77,9 +79,8 @@ const command: Command = {
                     .setPlaceholder("Select documentation to send"),
             );
             await interaction
-                .reply({
+                .editReply({
                     content: "Didn't find an exact match, please select one from below",
-                    ephemeral: true,
                     components: [selectMenuRow],
                 })
                 .catch(console.error);

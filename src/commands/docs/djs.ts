@@ -43,7 +43,7 @@ const command: Command = {
         const doc = await Doc.fetch(source, { force: true }).catch(console.error);
 
         if (!doc) {
-            await interaction.reply({ content: "Couldn't fetch docs", ephemeral: true }).catch(console.error);
+            await interaction.editReply({ content: "Couldn't fetch docs" }).catch(console.error);
             return;
         }
         // const resultEmbed = doc.resolveEmbed(query, { excludePrivateElements: !searchPrivate });
@@ -57,7 +57,7 @@ const command: Command = {
             // Satisfies the method's MessageEmbedOption type
             const embedObj = { ...notFoundEmbed, timestamp: timeStampDate };
 
-            await interaction.reply({ embeds: [embedObj], ephemeral: true }).catch(console.error);
+            await interaction.editReply({ embeds: [embedObj] }).catch(console.error);
             return;
         } else if (Array.isArray(result)) {
             // If there are multiple results, send a select menu from which the user can choose which one to send
@@ -69,9 +69,8 @@ const command: Command = {
                     .setPlaceholder("Select documentation to send"),
             );
             await interaction
-                .reply({
+                .editReply({
                     content: "Didn't find an exact match, please select one from below",
-                    ephemeral: true,
                     components: [selectMenuRow],
                 })
                 .catch(console.error);
@@ -87,7 +86,10 @@ const command: Command = {
             // The final field should be the View Source button
             embedObj.fields = [embedObj.fields?.at(-1)];
         }
-        await interaction.reply({ embeds: [embedObj], components: [deleteButtonRow] }).catch(console.error);
+        await interaction.editReply({
+            content: "Sent documentations for " + (query.length >= 100 ? query.slice(0, 100) + "..." : query),
+        });
+        await interaction.followUp({ embeds: [embedObj], components: [deleteButtonRow] }).catch(console.error);
         return;
     },
 };

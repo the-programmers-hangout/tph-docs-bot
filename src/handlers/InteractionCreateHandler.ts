@@ -58,8 +58,10 @@ export function loadCommands(context: MyContext) {
     });
 }
 async function commandInteractionHandler(context: MyContext, interaction: CommandInteraction) {
+    await interaction.deferReply({ ephemeral: true }).catch(console.error);
+
     const command = context.commands.get(interaction.commandName);
-    if (!command) return interaction.reply({ content: "Command not found", ephemeral: true });
+    if (!command) return interaction.editReply({ content: "Command not found" }).catch(console.error);
 
     if (commandPermissionCheck(interaction, command)) return;
     if (commandCooldownCheck(interaction, command, context)) return;
@@ -68,15 +70,13 @@ async function commandInteractionHandler(context: MyContext, interaction: Comman
     } catch (e) {
         console.error(e);
         const errorMessage = "An error has occurred";
-        interaction
-            .reply({
-                content: errorMessage,
-                ephemeral: true,
-            })
-            .catch(console.error);
+        await interaction[interaction.replied ? "editReply" : "reply"]?.({
+            content: errorMessage,
+        }).catch(console.error);
     }
 }
 async function selectMenuInteractionHandler(context: MyContext, interaction: SelectMenuInteraction) {
+    await interaction.deferUpdate().catch(console.error);
     const CommandName = interaction.customId.split("/")[0];
     switch (CommandName) {
         case "mdnselect": {
@@ -87,7 +87,7 @@ async function selectMenuInteractionHandler(context: MyContext, interaction: Sel
 
             // Remove the menu and update the ephemeral message
             await interaction
-                .update({ content: "Sent documentations for " + selectedValue, components: [] })
+                .editReply({ content: "Sent documentations for " + selectedValue, components: [] })
                 .catch(console.error);
             // Send documentation
             await interaction.followUp({ embeds: [resultEmbed], components: [deleteButtonRow] }).catch(console.error);
@@ -105,14 +105,14 @@ async function selectMenuInteractionHandler(context: MyContext, interaction: Sel
 
             // Remove the menu and update the ephemeral message
             await interaction
-                .update({ content: "Sent documentations for " + selectedValue, components: [] })
+                .editReply({ content: "Sent documentations for " + selectedValue, components: [] })
                 .catch(console.error);
             // Send documentation
             await interaction.followUp({ embeds: [resultEmbed], components: [deleteButtonRow] }).catch(console.error);
             break;
         }
         default: {
-            interaction.reply({ content: "Unknown menu", ephemeral: true }).catch(console.error);
+            interaction.editReply({ content: "Unknown menu" }).catch(console.error);
         }
     }
 }
