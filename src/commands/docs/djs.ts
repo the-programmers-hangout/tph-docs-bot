@@ -112,8 +112,9 @@ export function searchDJSDoc(doc: Doc, query: string, searchPrivate?: boolean) {
     const searchResults = doc.search(query, options);
     if (!searchResults) return null;
     return searchResults.map((res) => {
+        const parsedDescription = res.description?.trim?.() ?? "No description provided";
         // Labels and values have a limit of 100 characters
-        const description = res.description.length >= 99 ? res.description.slice(0, 96) + "..." : res.description;
+        const description = parsedDescription.length >= 99 ? parsedDescription.slice(0, 96) + "..." : parsedDescription;
         return {
             label: res.formattedName,
             description,
