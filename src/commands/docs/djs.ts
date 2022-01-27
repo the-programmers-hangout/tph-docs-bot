@@ -16,7 +16,8 @@ const command: Command = {
             option
                 .setName("query")
                 .setDescription("Enter the phrase you'd like to search for, e.g: client#isready")
-                .setRequired(true),
+                .setRequired(true)
+                .setAutocomplete(true),
         )
         .addStringOption((option) =>
             option
@@ -39,8 +40,12 @@ const command: Command = {
             (interaction.options.getString("source") as keyof typeof sources) || "stable";
         // Whether to include private elements on the search results, by default false, shows private elements if the search returns an exact result;
         const searchPrivate = interaction.options.getBoolean("private") || false;
-        const doc = await Doc.fetch(source, { force: true });
+        const doc = await Doc.fetch(source, { force: true }).catch(console.error);
 
+        if (!doc) {
+            await interaction.editReply({ content: "Couldn't fetch docs" }).catch(console.error);
+            return;
+        }
         // const resultEmbed = doc.resolveEmbed(query, { excludePrivateElements: !searchPrivate });
         const result = searchDJSDoc(doc, query, searchPrivate);
         // If a result wasn't found
@@ -52,7 +57,7 @@ const command: Command = {
             // Satisfies the method's MessageEmbedOption type
             const embedObj = { ...notFoundEmbed, timestamp: timeStampDate };
 
-            await interaction.reply({ embeds: [embedObj], ephemeral: true }).catch(console.error);
+            await interaction.editReply({ embeds: [embedObj] }).catch(console.error);
             return;
         } else if (Array.isArray(result)) {
             // If there are multiple results, send a select menu from which the user can choose which one to send
@@ -64,9 +69,8 @@ const command: Command = {
                     .setPlaceholder("Select documentation to send"),
             );
             await interaction
-                .reply({
+                .editReply({
                     content: "Didn't find an exact match, please select one from below",
-                    ephemeral: true,
                     components: [selectMenuRow],
                 })
                 .catch(console.error);
@@ -82,7 +86,10 @@ const command: Command = {
             // The final field should be the View Source button
             embedObj.fields = [embedObj.fields?.at(-1)];
         }
-        await interaction.reply({ embeds: [embedObj], components: [deleteButtonRow] }).catch(console.error);
+        await interaction.editReply({
+            content: "Sent documentations for " + (query.length >= 100 ? query.slice(0, 100) + "..." : query),
+        });
+        await interaction.followUp({ embeds: [embedObj], components: [deleteButtonRow] }).catch(console.error);
         return;
     },
 };
@@ -105,8 +112,9 @@ export function searchDJSDoc(doc: Doc, query: string, searchPrivate?: boolean) {
     const searchResults = doc.search(query, options);
     if (!searchResults) return null;
     return searchResults.map((res) => {
+        const parsedDescription = res.description?.trim?.() ?? "No description provided";
         // Labels and values have a limit of 100 characters
-        const description = res.description.length >= 99 ? res.description.slice(0, 96) + "..." : res.description;
+        const description = parsedDescription.length >= 99 ? parsedDescription.slice(0, 96) + "..." : parsedDescription;
         return {
             label: res.formattedName,
             description,
