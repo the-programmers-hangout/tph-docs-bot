@@ -28,7 +28,12 @@ import { messageHandler } from "./handlers/MessageHandler";
                 return new LimitedCollection({ maxSize: 0 });
             },
         }),
-        commands: new Collection(),
+        commands: {
+            autocompletes: new Collection(),
+            buttons: new Collection(),
+            selectMenus: new Collection(),
+            slashCommands: new Collection(),
+        },
         cooldownCounter: new Collection(),
     };
     const docsBot = context.client;

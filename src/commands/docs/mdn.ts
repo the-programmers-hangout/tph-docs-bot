@@ -1,9 +1,9 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
-import { deleteButton } from "../../utils/CommandUtils";
+import { deleteButton, deleteButtonHandler } from "../../utils/CommandUtils";
 import { MessageActionRow, MessageEmbed, MessageSelectMenu } from "discord.js";
 import { gunzipSync } from "zlib";
 import { XMLParser } from "fast-xml-parser";
-import { Command } from "../../interfaces";
+import { Command, MdnDoc } from "../../interfaces";
 import fetch from "node-fetch";
 import flexsearch from "flexsearch";
 
@@ -24,69 +24,107 @@ const MDN_ICON_URL = "https://i.imgur.com/1P4wotC.png" as const;
 const MDN_BLUE_COLOR = 0x83bfff as const;
 
 const command: Command = {
-    data: new SlashCommandBuilder()
-        .setName("mdn")
-        .setDescription("Searches MDN documentation.")
-        .addStringOption((opt) =>
-            opt
-                .setName("query")
-                .setDescription("Enter the phrase you'd like to search for. Example: Array.filter")
-                .setRequired(true)
-                .setAutocomplete(true),
-        ),
-    async execute(interaction) {
-        const deleteButtonRow = new MessageActionRow().addComponents([deleteButton(interaction.user.id)]);
-        const query = interaction.options.getString("query");
-        const { index, sitemap } = await getSources();
-        const search: string[] = index.search(query, { limit: 10 }).map((id) => sitemap[<number>id].loc);
-        const embed = new MessageEmbed()
-            .setColor(MDN_BLUE_COLOR)
-            .setAuthor({ name: "MDN Documentation", iconURL: MDN_ICON_URL })
-            .setTitle(`Search for: ${query.slice(0, 243)}`);
+    slashCommand: {
+        data: new SlashCommandBuilder()
+            .setName("mdn")
+            .setDescription("Searches MDN documentation.")
+            .addStringOption((opt) =>
+                opt
+                    .setName("query")
+                    .setDescription("Enter the phrase you'd like to search for. Example: Array.filter")
+                    .setRequired(true)
+                    .setAutocomplete(true),
+            ),
+        async run(interaction) {
+            const deleteButtonRow = new MessageActionRow().addComponents([deleteButton(interaction.user.id)]);
+            const query = interaction.options.getString("query");
+            const { index, sitemap } = await getSources();
+            const search: string[] = index.search(query, { limit: 10 }).map((id) => sitemap[<number>id].loc);
+            const embed = new MessageEmbed()
+                .setColor(MDN_BLUE_COLOR)
+                .setAuthor({ name: "MDN Documentation", iconURL: MDN_ICON_URL })
+                .setTitle(`Search for: ${query.slice(0, 243)}`);
 
-        if (!search.length) {
-            embed.setColor(0xff0000).setDescription("No results found...");
-            await interaction.editReply({ embeds: [embed] }).catch(console.error);
-            return;
-        } else if (search.length === 1) {
-            const resultEmbed = await getSingleMDNSearchResults(search[0]);
-            if (!resultEmbed) {
-                await interaction.editReply({ content: "Couldn't find any results" }).catch(console.error);
+            if (!search.length) {
+                embed.setColor(0xff0000).setDescription("No results found...");
+                await interaction.editReply({ embeds: [embed] }).catch(console.error);
+                return;
+            } else if (search.length === 1) {
+                const resultEmbed = await getSingleMDNSearchResults(search[0]);
+                if (!resultEmbed) {
+                    await interaction.editReply({ content: "Couldn't find any results" }).catch(console.error);
+                    return;
+                }
+                await interaction
+                    .editReply("Sent documentation for " + (query.length >= 100 ? query.slice(0, 100) + "..." : query))
+                    .catch(console.error);
+                await interaction
+                    .followUp({
+                        embeds: [resultEmbed],
+                        components: [deleteButtonRow],
+                    })
+                    .catch(console.error);
+
+                return;
+            } else {
+                // If there are multiple results, send a select menu from which the user can choose which one to send
+                const selectMenuRow = new MessageActionRow().addComponents(
+                    new MessageSelectMenu()
+                        .setCustomId("mdnselect/" + interaction.user.id)
+                        .addOptions(
+                            search.map((val) => {
+                                const parsed = val.length >= 99 ? val.split("/").slice(-2).join("/") : val;
+                                return { label: parsed, value: parsed };
+                            }),
+                        )
+                        .setPlaceholder("Select documentation to send"),
+                );
+                await interaction
+                    .editReply({
+                        content: "Didn't find an exact match, please select one from below",
+                        components: [selectMenuRow],
+                    })
+                    .catch(console.error);
                 return;
             }
-            await interaction
-                .editReply("Sent documentation for " + (query.length >= 100 ? query.slice(0, 100) + "..." : query))
-                .catch(console.error);
-            await interaction
-                .followUp({
-                    embeds: [resultEmbed],
-                    components: [deleteButtonRow],
-                })
-                .catch(console.error);
-
-            return;
-        } else {
-            // If there are multiple results, send a select menu from which the user can choose which one to send
-            const selectMenuRow = new MessageActionRow().addComponents(
-                new MessageSelectMenu()
-                    .setCustomId("mdnselect/" + interaction.user.id)
-                    .addOptions(
-                        search.map((val) => {
-                            const parsed = val.length >= 99 ? val.split("/").slice(-2).join("/") : val;
-                            return { label: parsed, value: parsed };
-                        }),
-                    )
-                    .setPlaceholder("Select documentation to send"),
-            );
-            await interaction
-                .editReply({
-                    content: "Didn't find an exact match, please select one from below",
-                    components: [selectMenuRow],
-                })
-                .catch(console.error);
-            return;
-        }
+        },
     },
+    selectMenus: [
+        {
+            custom_id: "mdnselect",
+            async run(interaction) {
+                const Initiator = interaction.customId.split("/")[1];
+                const deleteButtonRow = new MessageActionRow().addComponents([deleteButton(Initiator)]);
+                const selectedValue = interaction.values[0];
+                const resultEmbed = await getSingleMDNSearchResults(selectedValue);
+
+                // Remove the menu and update the ephemeral message
+                await interaction
+                    .editReply({ content: "Sent documentations for " + selectedValue, components: [] })
+                    .catch(console.error);
+                // Send documentation
+                await interaction
+                    .followUp({ embeds: [resultEmbed], components: [deleteButtonRow] })
+                    .catch(console.error);
+            },
+        },
+    ],
+    buttons: [{ custom_id: "deletebtn", run: deleteButtonHandler }],
+    autocomplete: [
+        {
+            focusedOption: "query",
+            async run(interaction, focusedOption) {
+                const query = focusedOption.value as string;
+                const { index, sitemap } = await getSources();
+                const search = index.search(query, { limit: 10 }).map((id) => {
+                    const val = sitemap[<number>id].loc;
+                    const parsed = val.length >= 99 ? val.split("/").slice(-2).join("/") : val;
+                    return { name: parsed, value: parsed };
+                });
+                await interaction.respond(search).catch(console.error);
+            },
+        },
+    ],
 };
 
 // Export to reuse on the select menu handler
@@ -126,48 +164,6 @@ export async function getSources(): Promise<typeof sources> {
 
     sources = { index, sitemap, lastUpdated: Date.now() };
     return sources;
-}
-
-interface MdnDoc {
-    isMarkdown: boolean;
-    isTranslated: boolean;
-    isActive: boolean;
-    flaws: Record<string, unknown>;
-    title: string;
-    mdn_url: string;
-    locale: string;
-    native: string;
-    sidebarHTML: string;
-    body: {
-        type: "prose" | "specifications" | "browser_compatibility";
-        value: {
-            id: string | null;
-            title: string | null;
-            isH3: boolean;
-            // type:prose
-            content?: string;
-            // type:specifications
-            specifications?: { bcdSpecificationURL: string; title: string; shortTitle: string }[];
-            // type:browser_compatibility
-            dataURL?: string;
-            // type:specifications | type:browser_compatibility
-            query?: string;
-        };
-    }[];
-    toc: { text: string; id: string }[];
-    summary: string;
-    popularity: number;
-    modified: string; // ISO Date String
-    other_translations: { title: string; locale: string; native: string }[];
-    source: {
-        folder: string;
-        github_url: string;
-        last_commit_url: string;
-        filename: string;
-    };
-    parents: { uri: string; title: string }[];
-    pageTitle: string;
-    noIndexing: boolean;
 }
 
 export default command;

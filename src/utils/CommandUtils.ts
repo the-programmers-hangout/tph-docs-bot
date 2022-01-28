@@ -1,5 +1,5 @@
 import { Permissions, Formatters, MessageButton } from "discord.js";
-import type { CommandInteraction, Snowflake } from "discord.js";
+import type { CommandInteraction, Snowflake, ButtonInteraction, Message } from "discord.js";
 import type { Command, MyContext } from "../interfaces";
 
 export const deleteButton = (initiatorId: Snowflake) =>
@@ -8,6 +8,19 @@ export const deleteButton = (initiatorId: Snowflake) =>
         .setEmoji("🗑")
         .setStyle("SECONDARY");
 
+export const deleteButtonHandler = async (interaction: ButtonInteraction<"cached">) => {
+    const commandInitiatorId = interaction.customId.replace("deletebtn/", "");
+    // If the button clicker is the command initiator
+    if (interaction.user.id === commandInitiatorId) {
+        (interaction.message as Message).delete().catch(console.error);
+    } else
+        await interaction
+            .reply({
+                content: "Only the command initiator is allowed to delete this message",
+                ephemeral: true,
+            })
+            .catch(console.error);
+};
 /**
  * Checks if the bot or a user has the needed permissions to run a command
  * @param interaction
@@ -15,7 +28,7 @@ export const deleteButton = (initiatorId: Snowflake) =>
  * @returns Whether to cancel the command
  */
 // * Note that as of writing, slash commands can override permissions
-export function commandPermissionCheck(interaction: CommandInteraction, command: Command): boolean {
+export function commandPermissionCheck(interaction: CommandInteraction, command: Command["slashCommand"]): boolean {
     const { client, user, channel } = interaction;
     // If the channel is a dm
     // if it's a partial, channel.type wouldn't exist
@@ -61,7 +74,7 @@ export function commandPermissionCheck(interaction: CommandInteraction, command:
     // By default, allow execution;
     return false;
 }
-export function commandCooldownCheck(interaction: CommandInteraction, command: Command, context: MyContext): boolean {
+export function commandCooldownCheck(interaction: CommandInteraction, command: Command["slashCommand"], context: MyContext): boolean {
     const { user } = interaction;
     if (command.cooldown) {
         const id = user.id + "/" + interaction.commandName;
