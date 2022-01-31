@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
-import { deleteButton, deleteButtonHandler } from "../../utils/CommandUtils";
+import { deleteButton } from "../../utils/CommandUtils";
 import { MessageActionRow, MessageEmbed, MessageSelectMenu } from "discord.js";
 import { gunzipSync } from "zlib";
 import { XMLParser } from "fast-xml-parser";
@@ -39,7 +39,8 @@ const command: Command = {
             const deleteButtonRow = new MessageActionRow().addComponents([deleteButton(interaction.user.id)]);
             const query = interaction.options.getString("query");
             const { index, sitemap } = await getSources();
-            const search: string[] = index.search(query, { limit: 10 }).map((id) => sitemap[<number>id].loc);
+            // Get the top 25 results
+            const search: string[] = index.search(query, { limit: 25 }).map((id) => sitemap[<number>id].loc);
             const embed = new MessageEmbed()
                 .setColor(MDN_BLUE_COLOR)
                 .setAuthor({ name: "MDN Documentation", iconURL: MDN_ICON_URL })
@@ -49,8 +50,9 @@ const command: Command = {
                 embed.setColor(0xff0000).setDescription("No results found...");
                 await interaction.editReply({ embeds: [embed] }).catch(console.error);
                 return;
-            } else if (search.length === 1) {
-                const resultEmbed = await getSingleMDNSearchResults(search[0]);
+            } else if (search.length === 1 || search.includes(query)) {
+                // If there's an exact match
+                const resultEmbed = await getSingleMDNSearchResults(search.includes(query) ? query : search[0]);
                 if (!resultEmbed) {
                     await interaction.editReply({ content: "Couldn't find any results" }).catch(console.error);
                     return;
@@ -109,15 +111,16 @@ const command: Command = {
             },
         },
     ],
-    buttons: [{ custom_id: "deletebtn", run: deleteButtonHandler }],
     autocomplete: [
         {
             focusedOption: "query",
             async run(interaction, focusedOption) {
                 const query = focusedOption.value as string;
                 const { index, sitemap } = await getSources();
-                const search = index.search(query, { limit: 10 }).map((id) => {
+                // The limit for autocomplete options is 25
+                const search = index.search(query, { limit: 25 }).map((id) => {
                     const val = sitemap[<number>id].loc;
+                    // Values and names have a limit of 100 characters
                     const parsed = val.length >= 99 ? val.split("/").slice(-2).join("/") : val;
                     return { name: parsed, value: parsed };
                 });
@@ -131,9 +134,11 @@ const command: Command = {
 export async function getSingleMDNSearchResults(searchQuery: string) {
     // Search for the match once again
     const { index, sitemap } = await getSources();
-    const secondSearch = index.search(searchQuery, { limit: 10 }).map((id) => sitemap[<number>id].loc)[0];
-
-    const res = await fetch(`${MDN_BASE_URL + secondSearch}/index.json`).catch(console.error);
+    // Search one more time
+    const secondSearch = index.search(searchQuery, { limit: 25 }).map((id) => sitemap[<number>id].loc);
+    // Since it returns an array, the exact match might not be the first selection, if the exact match exists, fetch using that, if not get the first result
+    const finalSelection = secondSearch.includes(searchQuery) ? searchQuery : secondSearch[0];
+    const res = await fetch(`${MDN_BASE_URL + finalSelection}/index.json`).catch(console.error);
     if (!res || !res?.ok) return null;
     const resJSON = await res.json?.().catch(console.error);
     if (!res.json) return null;
@@ -154,8 +159,8 @@ export async function getSources(): Promise<typeof sources> {
 
     const res = await fetch("https://developer.mozilla.org/sitemaps/en-us/sitemap.xml.gz");
     if (!res.ok) return sources; // Fallback to old sources if the new ones are not available for any reason
-    const something = new XMLParser().parse(gunzipSync(await res.buffer()).toString());
-    const sitemap: Sitemap<number> = something.urlset.url.map((entry: SitemapEntry<string>) => ({
+    const parsedSitemap = new XMLParser().parse(gunzipSync(await res.buffer()).toString());
+    const sitemap: Sitemap<number> = parsedSitemap.urlset.url.map((entry: SitemapEntry<string>) => ({
         loc: entry.loc.slice(MDN_BASE_URL.length),
         lastmod: new Date(entry.lastmod).valueOf(),
     }));

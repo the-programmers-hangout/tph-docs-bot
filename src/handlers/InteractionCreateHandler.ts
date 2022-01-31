@@ -1,3 +1,5 @@
+import { commandCooldownCheck, commandPermissionCheck } from "../utils/CommandUtils";
+import glob from "glob";
 import type { Command, MyContext } from "../interfaces";
 import type {
     AutocompleteInteraction,
@@ -6,10 +8,6 @@ import type {
     Interaction,
     SelectMenuInteraction,
 } from "discord.js";
-
-import { commandCooldownCheck, commandPermissionCheck } from "../utils/CommandUtils";
-
-import glob from "glob";
 
 export async function interactionCreateHandler(context: MyContext, interaction: Interaction<"cached">) {
     try {
@@ -80,7 +78,8 @@ async function commandInteractionHandler(context: MyContext, interaction: Comman
     }
 }
 async function buttonInteractionHandler(context: MyContext, interaction: ButtonInteraction<"cached">) {
-    const button = context.commands.buttons.find((but) => interaction.customId.startsWith(but.custom_id));
+    const buttonId = interaction.customId.split("/")[0];
+    const button = context.commands.buttons.get(buttonId);
     if (button) {
         await button.run(interaction, context).catch(console.error);
         return;
@@ -93,9 +92,8 @@ async function buttonInteractionHandler(context: MyContext, interaction: ButtonI
 async function selectMenuInteractionHandler(context: MyContext, interaction: SelectMenuInteraction<"cached">) {
     await interaction.deferUpdate().catch(console.error);
 
-    const menu = context.commands.selectMenus.find((selectmenu) =>
-        interaction.customId.startsWith(selectmenu.custom_id),
-    );
+    const menuId = interaction.customId.split("/")[0];
+    const menu = context.commands.selectMenus.get(menuId);
     if (menu) {
         await menu.run(interaction, context).catch(console.error);
         return;

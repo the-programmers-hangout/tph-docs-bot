@@ -2,7 +2,7 @@ import { Command } from "../../interfaces";
 import { SlashCommandBuilder } from "@discordjs/builders";
 import Doc, { sources } from "discord.js-docs";
 import { checkEmbedLimits } from "../../utils/EmbedUtils";
-import { deleteButton, deleteButtonHandler } from "../../utils/CommandUtils";
+import { deleteButton } from "../../utils/CommandUtils";
 import { MessageActionRow, MessageSelectMenu } from "discord.js";
 import type { APIEmbed } from "discord-api-types";
 
@@ -18,7 +18,9 @@ const command: Command = {
             .addStringOption((option) =>
                 option
                     .setName("query")
-                    .setDescription("Enter the phrase you'd like to search for, e.g: client#isready")
+                    .setDescription(
+                        "Enter the phrase you'd like to search for, e.g: client#isready or builders:slashcommandbuilder",
+                    )
                     .setRequired(true)
                     .setAutocomplete(true),
             )
@@ -40,8 +42,9 @@ const command: Command = {
             const queryOption = interaction.options.getString("query");
             const sourceOption = interaction.options.getString("source") as keyof typeof sources;
 
+            // Support the source:Query format
             let { Source: source = "stable", Query: query } =
-                queryOption.match(/(?:(?<Source>[^/]*)\/)?(?<Query>(?:.|\s)*)/i)?.groups ?? {};
+                queryOption.match(/(?:(?<Source>[^:]*):)?(?<Query>(?:.|\s)*)/i)?.groups ?? {};
             // The Default source should be stable
             if (!sources[source]) source = "stable";
 
@@ -101,7 +104,6 @@ const command: Command = {
             return;
         },
     },
-    buttons: [{ custom_id: "deletebtn", run: deleteButtonHandler }],
     selectMenus: [
         {
             custom_id: "djsselect",
@@ -130,8 +132,9 @@ const command: Command = {
             focusedOption: "query",
             async run(interaction, focusedOption) {
                 const focusedOptionValue = focusedOption.value as string;
+                // Support source:query format
                 let { Branch: branchOrProject = "stable", Query: query } =
-                    focusedOptionValue.match(/(?:(?<Branch>[^/]*)\/)?(?<Query>(?:.|\s)*)/i)?.groups ?? {};
+                    focusedOptionValue.match(/(?:(?<Branch>[^:]*):)?(?<Query>(?:.|\s)*)/i)?.groups ?? {};
                 if (!sources[branchOrProject]) branchOrProject = "stable";
 
                 const doc = await Doc.fetch(branchOrProject, { force: false });
@@ -141,13 +144,13 @@ const command: Command = {
                         .respond([
                             {
                                 name: singleElement.formattedName,
-                                value: branchOrProject + "/" + singleElement.formattedName,
+                                value: branchOrProject + ":" + singleElement.formattedName,
                             },
                         ])
                         .catch(console.error);
                     return;
                 }
-                const searchResults = doc.search(query, { excludePrivateElements: false });
+                const searchResults = doc.search(query, { excludePrivateElements: false, maxResults: 25 });
                 if (!searchResults) {
                     await interaction.respond([]).catch(console.error);
                     return;
@@ -156,7 +159,7 @@ const command: Command = {
                     .respond(
                         searchResults.map((elem) => ({
                             name: elem.formattedName,
-                            value: branchOrProject + "/" + elem.formattedName,
+                            value: branchOrProject + ":" + elem.formattedName,
                         })),
                     )
                     .catch(console.error);
@@ -174,7 +177,8 @@ function capitalize(str: string) {
 
 // Export to reuse on the select menu handler
 export function searchDJSDoc(doc: Doc, query: string, searchPrivate?: boolean) {
-    const options = { excludePrivateElements: !searchPrivate };
+    // Get first 25 results
+    const options = { excludePrivateElements: !searchPrivate, maxResults: 25 };
 
     const singleElement = doc.get(...query.split(/\.|#/));
     // Return embed for the single element, the exact match
@@ -182,6 +186,7 @@ export function searchDJSDoc(doc: Doc, query: string, searchPrivate?: boolean) {
 
     const searchResults = doc.search(query, options);
     if (!searchResults) return null;
+
     return searchResults.map((res) => {
         const parsedDescription = res.description?.trim?.() ?? "No description provided";
         // Labels and values have a limit of 100 characters

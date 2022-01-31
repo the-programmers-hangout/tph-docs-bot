@@ -3,6 +3,7 @@ import { Client, Collection, LimitedCollection } from "discord.js";
 import { MyContext } from "./interfaces";
 import { loadCommands, interactionCreateHandler } from "./handlers/InteractionCreateHandler";
 import { messageHandler } from "./handlers/MessageHandler";
+import { deleteButtonHandler } from "./utils/CommandUtils";
 
 (async function () {
     const context: MyContext = {
@@ -15,7 +16,7 @@ import { messageHandler } from "./handlers/MessageHandler";
             // For DMs, a partial channel object is received, in order to receive dms, CHANNEL partials must be activated
             partials: ["CHANNEL"],
             makeCache: (manager) => {
-                //! Disabling these caches will break djs funcitonality
+                //! Disabling these caches will break djs functionality
                 const unsupportedCaches = [
                     "GuildManager",
                     "ChannelManager",
@@ -38,6 +39,8 @@ import { messageHandler } from "./handlers/MessageHandler";
     };
     const docsBot = context.client;
     await loadCommands(context);
+    // Add delete button handler
+    context.commands.buttons.set("deletebtn", { custom_id: "deletebtn", run: deleteButtonHandler });
 
     docsBot.on("error", console.error);
     docsBot.on("warn", console.warn);
