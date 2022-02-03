@@ -1,21 +1,13 @@
+import { commandCooldownCheck, commandPermissionCheck } from "../utils/CommandUtils";
+import glob from "glob";
 import type { Command, MyContext } from "../interfaces";
 import type {
     AutocompleteInteraction,
     ButtonInteraction,
     CommandInteraction,
     Interaction,
-    Message,
     SelectMenuInteraction,
 } from "discord.js";
-import type { APIEmbed } from "discord-api-types";
-
-import { commandCooldownCheck, commandPermissionCheck, deleteButton } from "../utils/CommandUtils";
-import { getSingleMDNSearchResults, getSources } from "../commands/docs/mdn";
-import { searchDJSDoc } from "../commands/docs/djs";
-import { MessageActionRow } from "discord.js";
-
-import glob from "glob";
-import Doc from "discord.js-docs";
 
 export async function interactionCreateHandler(context: MyContext, interaction: Interaction<"cached">) {
     try {
@@ -50,7 +42,18 @@ export function loadCommands(context: MyContext) {
                         return {};
                     });
                     if (!myCommandFile) return;
-                    context.commands.set(myCommandFile.data.name, myCommandFile);
+                    const { autocomplete, buttons, selectMenus, slashCommand } = myCommandFile;
+                    autocomplete?.forEach((autocom) =>
+                        context.commands.autocompletes.set(
+                            myCommandFile.slashCommand?.data.name + "/" + autocom.focusedOption,
+                            autocom,
+                        ),
+                    );
+                    buttons?.forEach((button) => context.commands.buttons.set(button.custom_id, button));
+                    selectMenus?.forEach((selectMenu) =>
+                        context.commands.selectMenus.set(selectMenu.custom_id, selectMenu),
+                    );
+                    slashCommand && context.commands.slashCommands.set(slashCommand.data.name, slashCommand);
                 }),
             );
             resolve(undefined);
@@ -59,14 +62,13 @@ export function loadCommands(context: MyContext) {
 }
 async function commandInteractionHandler(context: MyContext, interaction: CommandInteraction) {
     await interaction.deferReply({ ephemeral: true }).catch(console.error);
-
-    const command = context.commands.get(interaction.commandName);
+    const command = context.commands.slashCommands.get(interaction.commandName);
     if (!command) return interaction.editReply({ content: "Command not found" }).catch(console.error);
 
     if (commandPermissionCheck(interaction, command)) return;
     if (commandCooldownCheck(interaction, command, context)) return;
     try {
-        await command.execute(interaction, context);
+        await command.run(interaction, context);
     } catch (e) {
         console.error(e);
         const errorMessage = "An error has occurred";
@@ -75,97 +77,35 @@ async function commandInteractionHandler(context: MyContext, interaction: Comman
         }).catch(console.error);
     }
 }
-async function selectMenuInteractionHandler(context: MyContext, interaction: SelectMenuInteraction) {
-    await interaction.deferUpdate().catch(console.error);
-    const CommandName = interaction.customId.split("/")[0];
-    switch (CommandName) {
-        case "mdnselect": {
-            const Initiator = interaction.customId.split("/")[1];
-            const deleteButtonRow = new MessageActionRow().addComponents([deleteButton(Initiator)]);
-            const selectedValue = interaction.values[0];
-            const resultEmbed = await getSingleMDNSearchResults(selectedValue);
-
-            // Remove the menu and update the ephemeral message
-            await interaction
-                .editReply({ content: "Sent documentations for " + selectedValue, components: [] })
-                .catch(console.error);
-            // Send documentation
-            await interaction.followUp({ embeds: [resultEmbed], components: [deleteButtonRow] }).catch(console.error);
-            break;
-        }
-
-        case "djsselect": {
-            const selectedValue = interaction.values[0];
-            const [, source, searchPrivate, Initiator] = interaction.customId.split("/");
-            const deleteButtonRow = new MessageActionRow().addComponents([deleteButton(Initiator)]);
-
-            const doc = await Doc.fetch(source, { force: true });
-
-            const resultEmbed = searchDJSDoc(doc, selectedValue, searchPrivate === "true") as APIEmbed;
-
-            // Remove the menu and update the ephemeral message
-            await interaction
-                .editReply({ content: "Sent documentations for " + selectedValue, components: [] })
-                .catch(console.error);
-            // Send documentation
-            await interaction.followUp({ embeds: [resultEmbed], components: [deleteButtonRow] }).catch(console.error);
-            break;
-        }
-        default: {
-            interaction.editReply({ content: "Unknown menu" }).catch(console.error);
-        }
-    }
-}
 async function buttonInteractionHandler(context: MyContext, interaction: ButtonInteraction<"cached">) {
-    // The delete button
-    if (interaction.customId.startsWith("deletebtn")) {
-        const commandInitiatorId = interaction.customId.replace("deletebtn/", "");
-        // If the button clicker is the command initiator
-        if (interaction.user.id === commandInitiatorId) {
-            (interaction.message as Message).delete().catch(console.error);
-        } else
-            interaction
-                .reply({
-                    content: "Only the command initiator is allowed to delete this message",
-                    ephemeral: true,
-                })
-                .catch(console.error);
+    const buttonId = interaction.customId.split("/")[0];
+    const button = context.commands.buttons.get(buttonId);
+    if (button) {
+        await button.run(interaction, context).catch(console.error);
+        return;
     }
+    await interaction[interaction.replied ? "editReply" : "reply"]?.({
+        content: "Unknown Button",
+        ephemeral: true,
+    }).catch(console.error);
+}
+async function selectMenuInteractionHandler(context: MyContext, interaction: SelectMenuInteraction<"cached">) {
+    await interaction.deferUpdate().catch(console.error);
+
+    const menuId = interaction.customId.split("/")[0];
+    const menu = context.commands.selectMenus.get(menuId);
+    if (menu) {
+        await menu.run(interaction, context).catch(console.error);
+        return;
+    }
+    await interaction[interaction.replied ? "editReply" : "reply"]?.({
+        content: "Unknown menu",
+        ephemeral: true,
+    }).catch(console.error);
 }
 
-async function autocompleteInteractionHandler(context: MyContext, interaction: AutocompleteInteraction) {
-    switch (interaction.commandName) {
-        case "djs": {
-            // Check the cache, the command will force fetch anyway
-            const doc = await Doc.fetch("stable", { force: false });
-            const query = interaction.options.getFocused() as string;
-            const singleElement = doc.get(...query.split(/\.|#/));
-            if (singleElement) {
-                await interaction
-                    .respond([{ name: singleElement.formattedName, value: singleElement.formattedName }])
-                    .catch(console.error);
-                return;
-            }
-            const searchResults = doc.search(query, { excludePrivateElements: false });
-            if (!searchResults) {
-                await interaction.respond([]).catch(console.error);
-                return;
-            }
-            await interaction
-                .respond(searchResults.map((elem) => ({ name: elem.formattedName, value: elem.formattedName })))
-                .catch(console.error);
-            break;
-        }
-        case "mdn": {
-            const query = interaction.options.getFocused() as string;
-
-            const { index, sitemap } = await getSources();
-            const search = index.search(query, { limit: 10 }).map((id) => {
-                const val = sitemap[<number>id].loc;
-                const parsed = val.length >= 99 ? val.split("/").slice(-2).join("/") : val;
-                return { name: parsed, value: parsed };
-            });
-            await interaction.respond(search).catch(console.error);
-        }
-    }
+async function autocompleteInteractionHandler(context: MyContext, interaction: AutocompleteInteraction<"cached">) {
+    const focusedOption = interaction.options.getFocused(true);
+    const autocom = context.commands.autocompletes.get(interaction.commandName + "/" + focusedOption.name);
+    if (autocom) await autocom.run(interaction, focusedOption, context).catch(console.error);
 }
