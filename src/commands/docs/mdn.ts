@@ -20,8 +20,8 @@ let sources = {
 };
 
 const MDN_BASE_URL = "https://developer.mozilla.org/en-US/docs/" as const;
-const MDN_ICON_URL = "https://i.imgur.com/1P4wotC.png" as const;
-const MDN_BLUE_COLOR = 0x83bfff as const;
+const MDN_ICON_URL = "https://i.imgur.com/qwmSZxR.png" as const;
+const MDN_COLOR = 0xffffff as const;
 
 const command: Command = {
     slashCommand: {
@@ -41,14 +41,14 @@ const command: Command = {
             const { index, sitemap } = await getSources();
             // Get the top 25 results
             const search: string[] = index.search(query, { limit: 25 }).map((id) => sitemap[<number>id].loc);
-            const embed = new MessageEmbed()
-                .setColor(MDN_BLUE_COLOR)
-                .setAuthor({ name: "MDN Documentation", iconURL: MDN_ICON_URL })
-                .setTitle(`Search for: ${query.slice(0, 243)}`);
 
             if (!search.length) {
-                embed.setColor(0xff0000).setDescription("No results found...");
-                await interaction.editReply({ embeds: [embed] }).catch(console.error);
+                const noResultsEmbed = new MessageEmbed()
+                    .setColor(0xff0000)
+                    .setAuthor({ name: "MDN Documentation", iconURL: MDN_ICON_URL })
+                    .setTitle(`Search for: ${query.slice(0, 243)}`)
+                    .setDescription("No results found...");
+                await interaction.editReply({ embeds: [noResultsEmbed] }).catch(console.error);
                 return;
             } else if (search.length === 1 || search.includes(query)) {
                 // If there's an exact match
@@ -146,12 +146,10 @@ export async function getSingleMDNSearchResults(searchQuery: string) {
     const doc: MdnDoc = resJSON.doc;
 
     return new MessageEmbed()
-        .setColor(MDN_BLUE_COLOR)
+        .setColor(MDN_COLOR)
         .setAuthor({ name: "MDN Documentation", iconURL: MDN_ICON_URL })
-        .setColor(0xffffff)
         .setTitle(doc.pageTitle)
         .setURL(`https://developer.mozilla.org/${doc.mdn_url}`)
-        .setThumbnail(MDN_ICON_URL)
         .setDescription(doc.summary);
 }
 export async function getSources(): Promise<typeof sources> {
